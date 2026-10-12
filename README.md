@@ -10,7 +10,9 @@ The application uses Google Apps Script for the server-side logic and Google She
 - Displays participant names and school details when matching column headers are present.
 - Lets a participant select **Present** or **Absent** for each of five workshop days.
 - Checks the configured attendance date and time window on the server before saving each day's attendance.
-- Records attendance in an `Attendance_Log` worksheet, including submission timestamp, participant list, participant row, name, school, day, workshop date and status.
+- Requires participants to draw a signature or upload a PNG/JPEG signature image for each session.
+- Records the server-side submission timestamp in `Attendance_Log`.
+- Places a resized signature image in the corresponding session cell in columns D:M of the selected English or Hindi participant worksheet (Day 1 forenoon/afternoon through Day 5 forenoon/afternoon).
 - Includes a responsive interface suitable for desktop and mobile screens.
 
 ## Data source
@@ -89,13 +91,14 @@ Worksheet tabs intended as participant lists are discovered automatically. The `
 
 ## Attendance records
 
-The backend creates an `Attendance_Log` worksheet when a valid submission is first saved. The log stores one row per participant/list/day/date combination; a later submission for the same combination updates that record.
+The backend creates an `Attendance_Log` worksheet when a valid submission is first saved. It stores one row per participant/list/day/session/date, including the server timestamp and the signature cell reference. A later submission for the same participant and session updates the existing log record and replaces the signature image anchored in the corresponding D:M cell. Signature images are inserted as over-grid images anchored to the session cell and resized to 100 × 45 pixels; the target column is set to 110 pixels wide and the participant row to at least 55 pixels high. A note on the cell records status, session and submission time.
 
 ## Important security and operational notes
 
 - **Participant identity is not strongly verified in the current version.** Choosing a name from the list does not prove that the person submitting is that participant. Do not treat this alone as secure identity verification.
 - Anyone who can access the deployed web app may be able to select another participant unless additional authentication or verification is implemented. Restrict web-app access appropriately.
-- The current interface asks the user to select all five day statuses in one submission. The backend independently validates each day against that day's configured date and time window; statuses outside the permitted window are not saved.
+- Attendance is submitted one session at a time; a participant does not need to mark all days/sessions together.
+- Each participant-selected English or Hindi worksheet receives the signature image in columns D:M. Ensure those columns are reserved for attendance signatures, because the script adjusts their width and participant row height to fit the image.
 - The `Attendance_Settings` worksheet is configuration data. Limit editing access to workshop organizers.
 - Test with a small number of records before using the app for official attendance.
 - Do not place passwords, private credentials or OAuth client secrets in this repository.
