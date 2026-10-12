@@ -1,88 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#123b6d">
-  <title>ZIET Mumbai | Workshop Attendance</title>
-  <style>
-    :root{--navy:#123b6d;--navy2:#0b2850;--gold:#f0a52b;--bg:#f3f6fb;--ink:#1e293b;--muted:#64748b;--line:#dbe3ef;--green:#168653;--red:#c63d46}
-    *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
-    header{background:linear-gradient(130deg,var(--navy2),var(--navy));color:white;text-align:center;padding:28px 16px 24px;border-bottom:5px solid var(--gold)}
-    header .eyebrow{font-size:.83rem;letter-spacing:.13em;text-transform:uppercase;color:#d7e7fb;font-weight:700}header h1{font-size:clamp(1.55rem,4vw,2.25rem);margin:7px 0}header p{margin:5px 0;color:#e6eef8}
-    main{width:min(980px,calc(100% - 28px));margin:24px auto 40px}.notice{background:#eaf3ff;color:#17477e;border:1px solid #c9defa;padding:13px 16px;border-radius:10px;margin-bottom:18px}
-    .card{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 6px 22px #123b6d0e}
-    h2{color:var(--navy);font-size:1.22rem;margin:0 0 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    label{display:block;font-weight:650;margin:0 0 6px}select,input{width:100%;min-height:44px;padding:10px 12px;border:1px solid #bdcadd;border-radius:8px;background:white;color:var(--ink);font:inherit}
-    select:focus,input:focus,button:focus-visible{outline:3px solid #c9defa;outline-offset:2px}
-    button{border:0;border-radius:8px;min-height:43px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
-    .primary{background:var(--navy);color:white}.primary:hover{background:var(--navy2)}.present{background:#e1f5e9;border:1px solid #8bd1aa;color:#116b41}.absent{background:#fde8e8;border:1px solid #efadb1;color:#a52832}
-    .muted{color:var(--muted);font-size:.92rem}.person{margin-top:14px;padding:15px;background:#f8fbff;border:1px solid var(--line);border-radius:10px}
-    .person-name{font-weight:750;font-size:1.05rem}.school{color:var(--muted);font-size:.94rem}
-    .days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px}.day{border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center;background:#fff}.day strong{display:block;color:var(--navy);margin-bottom:8px}.day .actions{display:grid;gap:7px}.day button{width:100%;padding:8px 5px;font-size:.9rem}.day .selected{box-shadow:inset 0 0 0 2px currentColor}
-    .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}.toolbar button{flex:1}.status{display:none;margin-top:14px;padding:11px 14px;border-radius:8px}.status.show{display:block}.status.ok{background:#e1f5e9;color:#116b41}.status.err{background:#fde8e8;color:#a52832}
-    footer{text-align:center;color:var(--muted);font-size:.88rem;padding:10px 16px 28px}
-    @media(max-width:720px){.days{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.card{padding:16px}}@media(max-width:400px){.days{grid-template-columns:1fr}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZIET Mumbai | Workshop Attendance</title>
+<style>
+:root{--navy:#123b6d;--deep:#0b2850;--gold:#f0a52b;--bg:#f3f6fb;--ink:#1e293b;--muted:#64748b;--line:#dbe3ef;--green:#168653;--red:#c63d46}
+*{box-sizing:border-box}body{margin:0;font:16px/1.55 "Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:26px 16px;text-align:center;color:white;background:linear-gradient(130deg,var(--deep),var(--navy));border-bottom:5px solid var(--gold)}
+header h1{margin:6px 0;font-size:clamp(1.5rem,4vw,2.15rem)}header p{margin:4px;color:#e6eef8}
+main{width:min(940px,calc(100% - 24px));margin:24px auto}.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:22px;margin-bottom:18px;box-shadow:0 6px 22px #123b6d0d}
+h2{margin:0 0 14px;color:var(--navy);font-size:1.2rem}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-weight:650;margin:0 0 6px}select{width:100%;min-height:44px;padding:10px;border:1px solid #bdcadd;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+button{min-height:42px;padding:9px 14px;border:0;border-radius:8px;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--navy);color:#fff}.present{background:#e1f5e9;color:#116b41;border:1px solid #8bd1aa}.absent{background:#fde8e8;color:#a52832;border:1px solid #efadb1}
+button.selected{box-shadow:inset 0 0 0 2px currentColor}.person{margin-top:14px;background:#f8fbff;border:1px solid var(--line);border-radius:9px;padding:14px}.school,.muted{color:var(--muted);font-size:.92rem}
+.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.day{border:1px solid var(--line);border-radius:10px;padding:11px;text-align:center}.day strong{display:block;color:var(--navy);margin-bottom:8px}.actions{display:grid;gap:7px}.actions button{padding:8px 3px}
+.toolbar{display:flex;gap:10px;margin-top:16px}.toolbar button{flex:1}.message{display:none;padding:12px;border-radius:8px;margin-top:14px;white-space:pre-wrap}.message.show{display:block}.ok{background:#e1f5e9;color:#116b41}.err{background:#fde8e8;color:#a52832}.info{background:#eaf3ff;color:#17477e}
+footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9rem}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.days{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}}@media(max-width:390px){.days{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-<header>
-  <div class="eyebrow">Kendriya Vidyalaya Sangathan</div>
-  <h1>Workshop Online Attendance</h1>
-  <p>Zonal Institute of Education &amp; Training, Mumbai</p>
-  <p>Five-day attendance recording</p>
-</header>
+<header><div>KENDRIYA VIDYALAYA SANGATHAN</div><h1>Workshop Online Attendance</h1><p>Zonal Institute of Education &amp; Training, Mumbai</p><p>Five-day participant attendance</p></header>
 <main>
-  <div class="notice"><strong>Participant attendance:</strong> Select your participant record, then choose Present or Absent for each workshop day. Attendance is accepted only during the configured attendance window in the connected application.</div>
-  <section class="card">
-    <h2>1. Identify the participant</h2>
-    <div class="grid">
-      <div><label for="batch">Workshop / participant list</label><select id="batch"><option value="">Loading participant lists…</option></select></div>
-      <div><label for="participant">Participant name and school</label><select id="participant" disabled><option value="">Select a participant list first</option></select></div>
-    </div>
-    <div class="person" id="personCard" hidden><div class="person-name" id="personName"></div><div class="school" id="personSchool"></div></div>
-    <p class="muted">Participant and school details should be loaded from the connected Google Sheet. Do not select another person's record.</p>
-  </section>
-  <section class="card">
-    <h2>2. Mark attendance for each day</h2>
-    <p class="muted">Select one status per day. The app backend must validate the schedule and submission time before saving.</p>
-    <div class="days" id="days">
-      <div class="day" data-day="1"><strong>Day 1</strong><div class="actions"><button class="present" data-status="Present" aria-pressed="false">Present</button><button class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div>
-      <div class="day" data-day="2"><strong>Day 2</strong><div class="actions"><button class="present" data-status="Present" aria-pressed="false">Present</button><button class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div>
-      <div class="day" data-day="3"><strong>Day 3</strong><div class="actions"><button class="present" data-status="Present" aria-pressed="false">Present</button><button class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div>
-      <div class="day" data-day="4"><strong>Day 4</strong><div class="actions"><button class="present" data-status="Present" aria-pressed="false">Present</button><button class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div>
-      <div class="day" data-day="5"><strong>Day 5</strong><div class="actions"><button class="present" data-status="Present" aria-pressed="false">Present</button><button class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div>
-    </div>
-    <div class="toolbar"><button class="primary" id="submit" type="button">Submit attendance</button><button id="reset" type="button" style="background:#eef2f7;color:#334155">Clear selections</button></div>
-    <div class="status" id="status" role="status" aria-live="polite"></div>
-  </section>
-  <section class="card">
-    <h2>Important note</h2>
-    <p>This repository contains the user interface. For live attendance, connect it to the Google Apps Script backend using the new data source spreadsheet, and deploy through Google Apps Script. A GitHub Pages page by itself cannot invoke Apps Script's <code>google.script.run</code> interface.</p>
-    <p><a href="https://docs.google.com/spreadsheets/d/1q7U2KHKFW-DU8ncANE-XXQ-vgdxZDLG2q2uqfxcAuZ4/edit?usp=sharing" target="_blank" rel="noopener">Open the participant Google Sheet</a></p>
-  </section>
-</main>
-<footer>KVS · ZIET Mumbai · Workshop Attendance</footer>
+<section class="card"><h2>1. Select your participant record</h2>
+<div class="grid"><div><label for="batch">Participant list / worksheet</label><select id="batch"><option value="">Loading lists…</option></select></div>
+<div><label for="participant">Participant name and school</label><select id="participant" disabled><option value="">Select a list first</option></select></div></div>
+<div id="person" class="person" hidden><strong id="pname"></strong><div id="pschool" class="school"></div></div>
+<div id="loadmsg" class="message info show">Connecting to the attendance service…</div>
+</section>
+<section class="card"><h2>2. Mark attendance</h2><p class="muted">Choose Present or Absent for each day. Your attendance is saved only when the configured date and time window allows it.</p>
+<div class="days" id="days">
+<div class="day" data-day="1"><strong>Day 1</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="2"><strong>Day 2</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="3"><strong>Day 3</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="4"><strong>Day 4</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="5"><strong>Day 5</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div>
+</div>
+<div class="toolbar"><button class="primary" id="submit" type="button">Submit attendance</button><button id="reset" type="button">Clear selections</button></div>
+<div id="message" class="message" role="status" aria-live="polite"></div>
+</section>
+<section class="card"><h2>Attendance policy</h2><p class="muted">Participant names and school details are loaded from the connected Google Sheet. Do not submit attendance for another participant. If a day is unavailable, the organiser must configure its date and attendance window in the Attendance_Settings sheet.</p></section>
+</main><footer>KVS · ZIET Mumbai · Workshop Attendance</footer>
 <script>
-  // This static GitHub Pages UI is a scaffold; participant loading and submission require a deployed backend API.
-  const batch=document.getElementById('batch'), participant=document.getElementById('participant'), statusBox=document.getElementById('status');
-  const chosen={};
-  document.querySelectorAll('.day button').forEach(btn=>btn.addEventListener('click',()=>{
-    const day=btn.closest('.day').dataset.day;
-    chosen[day]=btn.dataset.status;
-    btn.closest('.day').querySelectorAll('button').forEach(b=>{b.classList.toggle('selected',b===btn);b.setAttribute('aria-pressed',String(b===btn));});
-  }));
-  function showStatus(message,ok=false){statusBox.textContent=message;statusBox.className='status show '+(ok?'ok':'err');}
-  document.getElementById('reset').addEventListener('click',()=>{
-    Object.keys(chosen).forEach(k=>delete chosen[k]);
-    document.querySelectorAll('.day button').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false');});
-    showStatus('Selections cleared.',true);
-  });
-  document.getElementById('submit').addEventListener('click',()=>{
-    if(!batch.value||!participant.value){showStatus('Select your workshop list and participant before submitting.');return;}
-    if(Object.keys(chosen).length!==5){showStatus('Please select Present or Absent for all five days.');return;}
-    showStatus('Not submitted: connect this page to the deployed attendance backend before accepting attendance.');
-  });
+const batch=document.getElementById('batch'),participant=document.getElementById('participant'),message=document.getElementById('message'),loadmsg=document.getElementById('loadmsg');
+const chosen={};let people=[];
+function show(el,text,kind){el.textContent=text;el.className='message show '+kind}
+function loadLists(){
+ if(!(window.google&&google.script&&google.script.run)){show(loadmsg,'This page must be opened from the deployed Google Apps Script web-app URL, not GitHub Pages.','err');return}
+ google.script.run.withSuccessHandler(data=>{
+  batch.innerHTML='<option value="">Choose a participant list</option>';
+  (data.tabs||[]).forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;batch.appendChild(o)});
+  show(loadmsg,'Connected to spreadsheet: '+data.spreadsheetName,'ok');
+ }).withFailureHandler(e=>show(loadmsg,e.message||String(e),'err')).getInitialData();
+}
+batch.addEventListener('change',()=>{
+ participant.disabled=true;participant.innerHTML='<option value="">Loading participants…</option>';people=[];document.getElementById('person').hidden=true;
+ if(!batch.value){participant.innerHTML='<option value="">Select a list first</option>';return}
+ google.script.run.withSuccessHandler(rows=>{
+  people=rows||[];participant.innerHTML='<option value="">Choose your name</option>';
+  people.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name+(p.school?' — '+p.school:'');participant.appendChild(o)});
+  participant.disabled=false;
+  if(!people.length)show(message,'No participants were found in this worksheet. Check that row 1 contains a participant-name header.','err');
+  else show(message,people.length+' participant records loaded.','info');
+ }).withFailureHandler(e=>{participant.innerHTML='<option value="">Unable to load participants</option>';show(message,e.message||String(e),'err')}).getParticipants(batch.value);
+});
+participant.addEventListener('change',()=>{
+ const p=people.find(x=>x.id===participant.value),box=document.getElementById('person');
+ box.hidden=!p;if(p){document.getElementById('pname').textContent=p.name;document.getElementById('pschool').textContent=p.school||'School not identified in sheet';}
+});
+document.querySelectorAll('.day button').forEach(btn=>btn.addEventListener('click',()=>{
+ const d=btn.closest('.day').dataset.day;chosen[d]=btn.dataset.status;
+ btn.closest('.day').querySelectorAll('button').forEach(b=>{b.classList.toggle('selected',b===btn);b.setAttribute('aria-pressed',String(b===btn))});
+}));
+document.getElementById('reset').addEventListener('click',()=>{
+ Object.keys(chosen).forEach(k=>delete chosen[k]);document.querySelectorAll('.day button').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false')});show(message,'Selections cleared.','info');
+});
+document.getElementById('submit').addEventListener('click',()=>{
+ if(!batch.value||!participant.value){show(message,'Please select your participant list and your name.','err');return}
+ if(Object.keys(chosen).length!==5){show(message,'Please choose Present or Absent for all five days.','err');return}
+ const btn=document.getElementById('submit');btn.disabled=true;btn.textContent='Submitting…';
+ google.script.run.withSuccessHandler(result=>{show(message,result.message||'Attendance processed.','ok');btn.disabled=false;btn.textContent='Submit attendance'})
+ .withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent='Submit attendance'})
+ .submitAttendance({sheetName:batch.value,participantId:participant.value,statuses:chosen});
+});
+loadLists();
 </script>
-</body>
-</html>
+</body></html>
