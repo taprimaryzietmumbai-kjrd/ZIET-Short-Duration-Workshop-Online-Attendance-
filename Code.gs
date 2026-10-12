@@ -231,7 +231,10 @@ function getCurrentAttendanceSession() {
 function submitAttendance(payload) {
   if (!payload || !payload.sheetName || !payload.participantId ||
       !payload.dayNumber || !payload.sessionCode || !['Present', 'Absent'].includes(payload.status)) {
-    throw new Error('Select your participant and mark Present or Absent for the current session.');
+    throw new Error('Select your participant, attendance status, and session.');
+  }
+  if (!payload.signatureDataUrl || !/^data:image\/(png|jpeg|jpg);base64,/.test(payload.signatureDataUrl)) {
+    throw new Error('Please draw or upload your signature before submitting attendance.');
   }
   const dayNum = Number(payload.dayNumber);
   const sessionCode = String(payload.sessionCode);
@@ -249,16 +252,15 @@ function submitAttendance(payload) {
   const now = new Date();
   const tz = 'Asia/Kolkata';
   const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  const timeStampText = Utilities.formatDate(now, tz, 'dd.MM.yyyy HH:mm:ss');
   const sessionLabel = sessionCode === 'FN' ? 'Forenoon (पूर्वाह्न)' : 'Afternoon (अपराह्न)';
 
   if (!setting || !setting.date) throw new Error('The date for Day ' + dayNum + ' ' + sessionLabel + ' is not configured.');
   if (today !== setting.date) throw new Error('This session is configured for ' + setting.date + ', not today.');
-  // Attendance can be entered for either session on the configured workshop date.
-  // Each session is submitted separately; the session window is displayed as guidance.
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let log = ss.getSheetByName(LOG_SHEET);
-  const logHeaders = ['Timestamp', 'Participant Sheet', 'Participant Row', 'Participant Name', 'School', 'Day', 'Session', 'Workshop Date', 'Status', 'Submitted At'];
+  const logHeaders = ['Timestamp', 'Participant Sheet', 'Participant Row', 'Participant Name', 'School', 'Day', 'Session', 'Workshop Date', 'Status', 'Submitted At', 'Signature Cell'];
   if (!log) {
     log = ss.insertSheet(LOG_SHEET);
     log.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
@@ -267,11 +269,46 @@ function submitAttendance(payload) {
     const existing = log.getDataRange().getValues();
     log.clearContents();
     log.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
-    const migrated = existing.slice(1).map(r => [r[0], r[1], r[2], r[3], r[4], r[5], 'Legacy (session unspecified)', r[6], r[7], r[8]]);
+    const migrated = existing.slice(1).map(r => [r[0], r[1], r[2], r[3], r[4], r[5], 'Legacy (session unspecified)', r[6], r[7], r[8], '']);
     if (migrated.length) log.getRange(2, 1, migrated.length, logHeaders.length).setValues(migrated);
     log.setFrozenRows(1);
+  } else if (log.getLastColumn() < logHeaders.length) {
+    log.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
   }
 
+  const participantSheet = ss.getSheetByName(payload.sheetName);
+  const participantRow = Number(payload.participantId);
+  if (!participantSheet || participantRow < 1 || participantRow > participantSheet.getMaxRows()) {
+    throw new Error('Could not find the participant row in the selected worksheet.');
+  }
+
+  // D:M are reserved for the 10 session signatures: Day 1 FN/AN ... Day 5 FN/AN.
+  const signatureColumn = 4 + index;
+  const signatureCell = participantSheet.getRange(participantRow, signatureColumn);
+  const signatureCellA1 = signatureCell.getA1Notation();
+
+  const dataUrlParts = payload.signatureDataUrl.split(',');
+  const mime = dataUrlParts[0].match(/^data:(image\/(?:png|jpeg|jpg));base64$/i);
+  if (!mime || !dataUrlParts[1]) throw new Error('The signature image could not be read.');
+  const imageBytes = Utilities.base64Decode(dataUrlParts[1]);
+  if (imageBytes.length > 1500000) throw new Error('Please use a smaller signature image (under 1.5 MB).');
+  const blob = Utilities.newBlob(imageBytes, mime[1].toLowerCase().replace('image/jpg','image/jpeg'),
+    'signature_' + payload.participantId + '_day' + dayNum + '_' + sessionCode + '.png');
+
+  // Keep the signature inside its cell's visual boundaries.
+  participantSheet.setColumnWidth(signatureColumn, 110);
+  participantSheet.setRowHeight(participantRow, Math.max(participantSheet.getRowHeight(participantRow), 55));
+  signatureCell.setNote('Attendance: ' + payload.status + '\nSession: ' + sessionLabel + '\nSubmitted: ' + timeStampText);
+
+  // Replace any existing over-grid signature anchored to this cell.
+  participantSheet.getImages().forEach(image => {
+    const anchor = image.getAnchorCell();
+    if (anchor.getRow() === participantRow && anchor.getColumn() === signatureColumn) image.remove();
+  });
+  const insertedImage = participantSheet.insertImage(blob, signatureColumn, participantRow);
+  insertedImage.setWidth(100).setHeight(45).setAnchorCell(signatureCell);
+
+  // Keep a row-per-session audit log with the exact timestamp.
   const data = log.getDataRange().getValues();
   let existingRow = -1;
   for (let i = 1; i < data.length; i++) {
@@ -279,21 +316,25 @@ function submitAttendance(payload) {
         String(data[i][2]) === String(payload.participantId) &&
         String(data[i][5]) === ('Day ' + dayNum) &&
         String(data[i][6]) === sessionLabel &&
-        String(data[i][7]) === setting.date) {
+        normalizeWorkshopDate_(data[i][7], data[i][7] instanceof Date
+          ? Utilities.formatDate(data[i][7], tz, 'yyyy-MM-dd')
+          : String(data[i][7])) === setting.date) {
       existingRow = i + 1;
       break;
     }
   }
   const row = [now, payload.sheetName, String(payload.participantId), participant.name, participant.school,
-    'Day ' + dayNum, sessionLabel, setting.date, payload.status, now];
+    'Day ' + dayNum, sessionLabel, setting.date, payload.status, timeStampText, signatureCellA1];
   if (existingRow > 0) log.getRange(existingRow, 1, 1, row.length).setValues([row]);
   else log.appendRow(row);
 
+  // Also write an auditable status/time note to the session cell; the signature image remains within D:M.
+  signatureCell.setNote('Attendance: ' + payload.status + '\nSession: ' + sessionLabel + '\nSubmitted: ' + timeStampText);
+
   return {
     success: true,
-    message: 'Attendance saved: Day ' + dayNum + ' — ' + sessionLabel + ' — ' + payload.status + '.',
-    dayNumber: dayNum,
-    sessionCode: sessionCode,
-    status: payload.status
+    message: 'Attendance and signature saved for Day ' + dayNum + ' — ' + sessionLabel + ' at ' + timeStampText + '.',
+    submittedAt: timeStampText,
+    signatureCell: signatureCellA1
   };
 }
