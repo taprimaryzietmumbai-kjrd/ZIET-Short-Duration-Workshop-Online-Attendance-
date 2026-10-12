@@ -157,20 +157,50 @@ function makeDefaultSettingsRows_() {
   return rows;
 }
 
+function getCurrentAttendanceSession() {
+  const settings = getAttendanceSettings_();
+  const now = new Date();
+  const tz = Session.getScriptTimeZone();
+  const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
+  const matching = [];
+  settings.forEach((s, i) => {
+    if (s.date === today && currentTime >= s.open && currentTime <= s.close) {
+      matching.push({
+        dayNumber: Math.floor(i / 2) + 1,
+        day: s.day,
+        sessionCode: i % 2 === 0 ? 'FN' : 'AN',
+        session: s.session,
+        date: s.date,
+        open: s.open,
+        close: s.close
+      });
+    }
+  });
+  if (matching.length) return { available: true, sessions: matching };
+  const todaySettings = settings.map((s, i) => ({
+    dayNumber: Math.floor(i / 2) + 1, sessionCode: i % 2 === 0 ? 'FN' : 'AN',
+    session: s.session, date: s.date, open: s.open, close: s.close
+  })).filter(s => s.date === today);
+  return {
+    available: false,
+    sessions: [],
+    todaySessions: todaySettings,
+    message: todaySettings.length
+      ? 'Attendance is not open right now. Today\'s configured session times are shown below.'
+      : 'No workshop attendance session is configured for today. Please check Attendance_Settings.'
+  };
+}
+
 function submitAttendance(payload) {
-  if (!payload || !payload.sheetName || !payload.participantId || !payload.statuses) {
-    throw new Error('Participant details and session-wise attendance statuses are required.');
+  if (!payload || !payload.sheetName || !payload.participantId ||
+      !payload.dayNumber || !payload.sessionCode || !['Present', 'Absent'].includes(payload.status)) {
+    throw new Error('Select your participant and mark Present or Absent for the current session.');
   }
-  const statuses = payload.statuses;
-  const sessionKeys = [];
-  for (let day = 1; day <= 5; day++) {
-    ['FN', 'AN'].forEach(session => {
-      const key = day + '_' + session;
-      sessionKeys.push(key);
-      if (!['Present', 'Absent'].includes(statuses[key])) {
-        throw new Error('Please choose Present or Absent for all forenoon and afternoon sessions.');
-      }
-    });
+  const dayNum = Number(payload.dayNumber);
+  const sessionCode = String(payload.sessionCode);
+  if (dayNum < 1 || dayNum > 5 || !Number.isInteger(dayNum) || !['FN', 'AN'].includes(sessionCode)) {
+    throw new Error('Invalid day or session.');
   }
 
   const participantList = getParticipants(payload.sheetName);
@@ -178,17 +208,28 @@ function submitAttendance(payload) {
   if (!participant) throw new Error('Participant not found. Refresh the list and try again.');
 
   const settings = getAttendanceSettings_();
+  const index = (dayNum - 1) * 2 + (sessionCode === 'FN' ? 0 : 1);
+  const setting = settings[index];
   const now = new Date();
   const tz = Session.getScriptTimeZone();
+  const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
+  const sessionLabel = sessionCode === 'FN' ? 'Forenoon (पूर्वाह्न)' : 'Afternoon (अपराह्न)';
+
+  if (!setting || !setting.date) throw new Error('The date for Day ' + dayNum + ' ' + sessionLabel + ' is not configured.');
+  if (today !== setting.date) throw new Error('This session is configured for ' + setting.date + ', not today.');
+  if (currentTime < setting.open || currentTime > setting.close) {
+    throw new Error('Attendance is closed for ' + sessionLabel + '. Permitted time: ' + setting.open + '–' + setting.close + '.');
+  }
+
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let log = ss.getSheetByName(LOG_SHEET);
   const logHeaders = ['Timestamp', 'Participant Sheet', 'Participant Row', 'Participant Name', 'School', 'Day', 'Session', 'Workshop Date', 'Status', 'Submitted At'];
   if (!log) {
     log = ss.insertSheet(LOG_SHEET);
-    log.appendRow(logHeaders);
+    log.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
     log.setFrozenRows(1);
   } else if (String(log.getRange(1, 7).getDisplayValue()).trim() !== 'Session') {
-    // Upgrade the old log layout by adding a Session column while preserving prior records.
     const existing = log.getDataRange().getValues();
     log.clearContents();
     log.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
@@ -197,56 +238,28 @@ function submitAttendance(payload) {
     log.setFrozenRows(1);
   }
 
-  const accepted = [];
-  const rejected = [];
-  settings.forEach((setting, index) => {
-    const dayNum = Math.floor(index / 2) + 1;
-    const sessionCode = index % 2 === 0 ? 'FN' : 'AN';
-    const sessionLabel = index % 2 === 0 ? 'Forenoon (पूर्वाह्न)' : 'Afternoon (अपराह्न)';
-    const status = statuses[dayNum + '_' + sessionCode];
-    if (!setting.date) {
-      rejected.push('Day ' + dayNum + ' ' + sessionLabel + ': date not configured');
-      return;
+  const data = log.getDataRange().getValues();
+  let existingRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]) === payload.sheetName &&
+        String(data[i][2]) === String(payload.participantId) &&
+        String(data[i][5]) === ('Day ' + dayNum) &&
+        String(data[i][6]) === sessionLabel &&
+        String(data[i][7]) === setting.date) {
+      existingRow = i + 1;
+      break;
     }
-    const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
-    if (today !== setting.date) {
-      rejected.push('Day ' + dayNum + ' ' + sessionLabel + ': attendance available only on ' + setting.date);
-      return;
-    }
-    const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
-    if (currentTime < setting.open || currentTime > setting.close) {
-      rejected.push('Day ' + dayNum + ' ' + sessionLabel + ': window is ' + setting.open + '–' + setting.close);
-      return;
-    }
-
-    const data = log.getDataRange().getValues();
-    let existingRow = -1;
-    for (let i = 1; i < data.length; i++) {
-      if (String(data[i][1]) === payload.sheetName &&
-          String(data[i][2]) === String(payload.participantId) &&
-          String(data[i][5]) === ('Day ' + dayNum) &&
-          String(data[i][6]) === sessionLabel &&
-          String(data[i][7]) === setting.date) {
-        existingRow = i + 1;
-        break;
-      }
-    }
-    const row = [now, payload.sheetName, String(payload.participantId), participant.name, participant.school,
-      'Day ' + dayNum, sessionLabel, setting.date, status, now];
-    if (existingRow > 0) log.getRange(existingRow, 1, 1, row.length).setValues([row]);
-    else log.appendRow(row);
-    accepted.push('Day ' + dayNum + ' ' + sessionLabel);
-  });
-
-  if (!accepted.length) {
-    throw new Error('No attendance was saved. ' + rejected.join('; ') +
-      '. Configure dates and time windows in the "' + SETTINGS_SHEET + '" tab.');
   }
+  const row = [now, payload.sheetName, String(payload.participantId), participant.name, participant.school,
+    'Day ' + dayNum, sessionLabel, setting.date, payload.status, now];
+  if (existingRow > 0) log.getRange(existingRow, 1, 1, row.length).setValues([row]);
+  else log.appendRow(row);
+
   return {
     success: true,
-    message: 'Attendance saved for: ' + accepted.join(', ') +
-      (rejected.length ? '. Not saved: ' + rejected.join('; ') : '.'),
-    accepted: accepted,
-    rejected: rejected
+    message: 'Attendance saved: Day ' + dayNum + ' — ' + sessionLabel + ' — ' + payload.status + '.',
+    dayNumber: dayNum,
+    sessionCode: sessionCode,
+    status: payload.status
   };
 }
