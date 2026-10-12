@@ -16,7 +16,12 @@ button{min-height:42px;padding:9px 14px;border:0;border-radius:8px;font:inherit;
 button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--navy);color:#fff}.present{background:#e1f5e9;color:#116b41;border:1px solid #8bd1aa}.absent{background:#fde8e8;color:#a52832;border:1px solid #efadb1}
 button.selected{box-shadow:inset 0 0 0 2px currentColor}.person{margin-top:14px;background:#f8fbff;border:1px solid var(--line);border-radius:9px;padding:14px}.school,.muted{color:var(--muted);font-size:.92rem}
 .days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.day{border:1px solid var(--line);border-radius:10px;padding:12px}.day>strong{display:block;color:var(--navy);margin-bottom:10px;font-size:1.05rem}.session{padding:9px 0;border-top:1px solid var(--line)}.session>span{display:block;font-weight:650;font-size:.92rem;margin-bottom:7px}.actions{display:flex;gap:8px}.actions button{flex:1;padding:8px 3px}
-.toolbar{display:flex;gap:10px;margin-top:16px}.toolbar button{flex:1}.message{display:none;padding:12px;border-radius:8px;margin-top:14px;white-space:pre-wrap}.message.show{display:block}.ok{background:#e1f5e9;color:#116b41}.err{background:#fde8e8;color:#a52832}.info{background:#eaf3ff;color:#17477e}
+.toolbar{display:flex;gap:10px;margin-top:16px}.toolbar button{flex:1}
+.signatureBox{margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fbfdff}
+.signatureTools{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+#signatureCanvas{display:block;width:100%;height:170px;background:#fff;border:1px dashed #7c8da6;border-radius:8px;touch-action:none}
+.signatureHint{font-size:.88rem;color:var(--muted);margin:6px 0}
+input[type=file]{max-width:100%;font:inherit}.message{display:none;padding:12px;border-radius:8px;margin-top:14px;white-space:pre-wrap}.message.show{display:block}.ok{background:#e1f5e9;color:#116b41}.err{background:#fde8e8;color:#a52832}.info{background:#eaf3ff;color:#17477e}
 footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9rem}
 @media(max-width:700px){.grid{grid-template-columns:1fr}.days{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}}@media(max-width:390px){.days{grid-template-columns:1fr}}
 </style>
@@ -37,6 +42,13 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
 <label for="sessionChoice" style="display:block;margin-top:14px">Choose one session to record</label><select id="sessionChoice" style="width:100%;min-height:44px;padding:10px;border:1px solid #bdcadd;border-radius:8px;font:inherit;background:#fff;color:#1e293b"></select>
 <div class="day" style="margin-top:14px;text-align:left"><strong id="sessionHeading">Selected session</strong>
 <div class="actions" style="display:flex;gap:10px"><button type="button" class="present" id="markPresent" aria-pressed="false">Present</button><button type="button" class="absent" id="markAbsent" aria-pressed="false">Absent</button></div>
+</div>
+<div class="signatureBox">
+<strong>3. Participant signature / प्रतिभागी के हस्ताक्षर</strong>
+<p class="signatureHint">Sign in the box using your finger or mouse, or upload a signature image. A signature is required for each session.</p>
+<canvas id="signatureCanvas" width="900" height="300" aria-label="Draw your signature here"></canvas>
+<div class="signatureTools"><button type="button" id="clearSignature">Clear signature</button><label for="signatureUpload" style="margin:8px 0 0">Upload signature image</label><input type="file" id="signatureUpload" accept="image/png,image/jpeg"></div>
+<div id="signatureStatus" class="signatureHint">No signature added yet.</div>
 </div>
 <div class="toolbar"><button class="primary" id="submit" type="button">Submit this session's attendance</button><button id="reset" type="button">Clear selection</button></div>
 </div>
@@ -122,16 +134,35 @@ function chooseStatus(status){
 document.getElementById('markPresent').addEventListener('click',()=>chooseStatus('Present'));
 document.getElementById('markAbsent').addEventListener('click',()=>chooseStatus('Absent'));
 document.getElementById('reset').addEventListener('click',()=>{chooseStatus('');show(message,'Selection cleared.','info')});
+
+const canvas=document.getElementById('signatureCanvas'),ctx=canvas.getContext('2d');
+let drawing=false,signatureHasInk=false,uploadedSignatureData='';
+function resetCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#102a43';signatureHasInk=false;uploadedSignatureData='';document.getElementById('signatureStatus').textContent='No signature added yet.';}
+function canvasPoint(event){const rect=canvas.getBoundingClientRect();return {x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};}
+canvas.addEventListener('pointerdown',e=>{drawing=true;canvas.setPointerCapture(e.pointerId);const p=canvasPoint(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+0.1,p.y+0.1);ctx.stroke();signatureHasInk=true;uploadedSignatureData='';document.getElementById('signatureStatus').textContent='Signature drawn.';});
+canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=canvasPoint(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+canvas.addEventListener('pointerup',()=>{drawing=false;});
+canvas.addEventListener('pointercancel',()=>{drawing=false;});
+document.getElementById('clearSignature').addEventListener('click',resetCanvas);
+document.getElementById('signatureUpload').addEventListener('change',e=>{
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ if(!/^image\/(png|jpeg)$/.test(file.type)){show(message,'Upload a PNG or JPEG signature image.','err');e.target.value='';return;}
+ if(file.size>1500000){show(message,'Please upload a signature image under 1.5 MB.','err');e.target.value='';return;}
+ const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{resetCanvas();const scale=Math.min((canvas.width-40)/img.width,(canvas.height-40)/img.height);const w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);signatureHasInk=true;uploadedSignatureData='';document.getElementById('signatureStatus').textContent='Uploaded signature loaded into the signing box.';};img.src=reader.result;};reader.readAsDataURL(file);
+});
+function signatureData(){if(uploadedSignatureData)return uploadedSignatureData;if(!signatureHasInk)return '';return canvas.toDataURL('image/png');}
+
 document.getElementById('submit').addEventListener('click',()=>{
  if(!batch.value||!participant.value){show(message,'Please select your participant list and your name.','err');return}
  if(!active){show(message,'There is no open attendance session right now.','err');return}
  if(!selectedStatus){show(message,'Select Present or Absent for the current session only.','err');return}
+ if(!signatureData()){show(message,'Please draw or upload your signature for this session before submitting.','err');return}
  const btn=document.getElementById('submit');btn.disabled=true;btn.textContent='Submitting…';
  google.script.run.withSuccessHandler(result=>{
-  show(message,result.message||'Attendance saved.','ok');btn.disabled=false;btn.textContent="Submit this session's attendance";chooseStatus('');
+  show(message,result.message||'Attendance saved.','ok');btn.disabled=false;btn.textContent="Submit this session's attendance";chooseStatus('');resetCanvas();document.getElementById('signatureUpload').value='';
   const submittedCode=active?active.sessionCode:'';loadCurrentSession(submittedCode);
  }).withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent="Submit this session's attendance"})
- .submitAttendance({sheetName:batch.value,participantId:participant.value,dayNumber:active.dayNumber,sessionCode:active.sessionCode,status:selectedStatus});
+ .submitAttendance({sheetName:batch.value,participantId:participant.value,dayNumber:active.dayNumber,sessionCode:active.sessionCode,status:selectedStatus,signatureDataUrl:signatureData()});
 });
 loadLists();
 </script>
