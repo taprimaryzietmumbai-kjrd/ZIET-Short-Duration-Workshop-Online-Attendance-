@@ -207,32 +207,24 @@ function getCurrentAttendanceSession() {
   const tz = 'Asia/Kolkata';
   const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
-  const matching = [];
-  settings.forEach((s, i) => {
-    if (s.date === today && currentTime >= s.open && currentTime <= s.close) {
-      matching.push({
-        dayNumber: Math.floor(i / 2) + 1,
-        day: s.day,
-        sessionCode: i % 2 === 0 ? 'FN' : 'AN',
-        session: s.session,
-        date: s.date,
-        open: s.open,
-        close: s.close
-      });
-    }
-  });
-  if (matching.length) return { available: true, sessions: matching };
-  const todaySettings = settings.map((s, i) => ({
-    dayNumber: Math.floor(i / 2) + 1, sessionCode: i % 2 === 0 ? 'FN' : 'AN',
-    session: s.session, date: s.date, open: s.open, close: s.close
+  // Show every session configured for today, even if the forenoon window has passed.
+  // This supports separate make-up recording for both sessions on the same workshop day.
+  const sessions = settings.map((s, i) => ({
+    dayNumber: Math.floor(i / 2) + 1,
+    day: s.day,
+    sessionCode: i % 2 === 0 ? 'FN' : 'AN',
+    session: s.session,
+    date: s.date,
+    open: s.open,
+    close: s.close,
+    currentlyWithinWindow: s.date === today && currentTime >= s.open && currentTime <= s.close
   })).filter(s => s.date === today);
+  if (sessions.length) return { available: true, sessions: sessions, today: today };
   return {
     available: false,
     sessions: [],
-    todaySessions: todaySettings,
-    message: todaySettings.length
-      ? 'Attendance is not open right now. Today\'s configured session times are shown below.'
-      : 'No workshop attendance session is configured for today. Please check Attendance_Settings.'
+    today: today,
+    message: 'No workshop attendance session is configured for today. Check that today\'s date is present in Attendance_Settings.'
   };
 }
 
@@ -255,16 +247,14 @@ function submitAttendance(payload) {
   const index = (dayNum - 1) * 2 + (sessionCode === 'FN' ? 0 : 1);
   const setting = settings[index];
   const now = new Date();
-  const tz = Session.getScriptTimeZone();
+  const tz = 'Asia/Kolkata';
   const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
-  const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
   const sessionLabel = sessionCode === 'FN' ? 'Forenoon (पूर्वाह्न)' : 'Afternoon (अपराह्न)';
 
   if (!setting || !setting.date) throw new Error('The date for Day ' + dayNum + ' ' + sessionLabel + ' is not configured.');
   if (today !== setting.date) throw new Error('This session is configured for ' + setting.date + ', not today.');
-  if (currentTime < setting.open || currentTime > setting.close) {
-    throw new Error('Attendance is closed for ' + sessionLabel + '. Permitted time: ' + setting.open + '–' + setting.close + '.');
-  }
+  // Attendance can be entered for either session on the configured workshop date.
+  // Each session is submitted separately; the session window is displayed as guidance.
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let log = ss.getSheetByName(LOG_SHEET);
