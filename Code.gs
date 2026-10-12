@@ -152,14 +152,15 @@ function getAttendanceSettings_() {
 }
 
 function normalizeWorkshopDate_(rawValue, displayedValue) {
+  // Preserve the sheet's visible date format; normalize only inside the app.
   if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
     return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   }
   const s = String(displayedValue || rawValue || '').trim();
   if (!s) return '';
-  let m = s.match(/^(\\d{1,2})[.\\/\\-](\\d{1,2})[.\\/\\-](\\d{4})$/);
+  let m = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
   if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
-  m = s.match(/^(\\d{4})[.\\/\\-](\\d{1,2})[.\\/\\-](\\d{1,2})$/);
+  m = s.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
   if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
   return s;
 }
@@ -169,7 +170,7 @@ function normalizeTime_(rawValue, displayedValue) {
     return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), 'HH:mm');
   }
   const s = String(displayedValue || rawValue || '').trim();
-  const m = s.match(/^(\\d{1,2}):(\\d{2})(?::\\d{2})?\\s*(AM|PM)?$/i);
+  const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
   if (!m) return s;
   let hour = Number(m[1]), minute = Number(m[2]);
   const ap = (m[3] || '').toUpperCase();
