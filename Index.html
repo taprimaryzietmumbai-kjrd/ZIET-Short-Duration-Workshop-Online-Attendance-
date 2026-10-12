@@ -30,30 +30,47 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
 <div id="person" class="person" hidden><strong id="pname"></strong><div id="pschool" class="school"></div></div>
 <div id="loadmsg" class="message info show">Connecting to the attendance service…</div>
 </section>
-<section class="card"><h2>2. Mark attendance</h2><p class="muted">Record attendance separately for each session: पूर्वाह्न (Forenoon) and अपराह्न (Afternoon), for every workshop day. Each session is validated against its own date and time window.</p>
-<div class="days" id="days">
-<div class="day" data-day="1"><strong>Day 1</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
-<div class="day" data-day="2"><strong>Day 2</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
-<div class="day" data-day="3"><strong>Day 3</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
-<div class="day" data-day="4"><strong>Day 4</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
-<div class="day" data-day="5"><strong>Day 5</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
+<section class="card"><h2>2. Mark attendance for the current session</h2>
+<p class="muted">Attendance is recorded one session at a time. During पूर्वाह्न (Forenoon), submit only the forenoon status. During अपराह्न (Afternoon), submit only the afternoon status. You do not need to mark future sessions.</p>
+<div id="sessionInfo" class="message info show">Checking which attendance session is open…</div>
+<div id="activeSession" hidden>
+<div class="day" style="margin-top:14px;text-align:left"><strong id="sessionHeading">Current session</strong>
+<div class="actions" style="display:flex;gap:10px"><button type="button" class="present" id="markPresent" aria-pressed="false">Present</button><button type="button" class="absent" id="markAbsent" aria-pressed="false">Absent</button></div>
 </div>
-<div class="toolbar"><button class="primary" id="submit" type="button">Submit attendance</button><button id="reset" type="button">Clear selections</button></div>
+<div class="toolbar"><button class="primary" id="submit" type="button">Submit this session's attendance</button><button id="reset" type="button">Clear selection</button></div>
+</div>
 <div id="message" class="message" role="status" aria-live="polite"></div>
 </section>
 <section class="card"><h2>Attendance policy</h2><p class="muted">Participant names and school details are loaded from the connected Google Sheet. Do not submit attendance for another participant. If a day is unavailable, the organiser must configure its date and attendance window in the Attendance_Settings sheet.</p></section>
 </main><footer>KVS · ZIET Mumbai · Workshop Attendance</footer>
 <script>
 const batch=document.getElementById('batch'),participant=document.getElementById('participant'),message=document.getElementById('message'),loadmsg=document.getElementById('loadmsg');
-const chosen={};let people=[];
+const sessionInfo=document.getElementById('sessionInfo'),activeSession=document.getElementById('activeSession');
+let people=[],active=null,selectedStatus='';
 function show(el,text,kind){el.textContent=text;el.className='message show '+kind}
 function loadLists(){
- if(!(window.google&&google.script&&google.script.run)){show(loadmsg,'This page must be opened from the deployed Google Apps Script web-app URL, not GitHub Pages.','err');return}
+ if(!(window.google&&google.script&&google.script.run)){show(loadmsg,'Open this application using the deployed Google Apps Script web-app URL, not GitHub Pages.','err');return}
  google.script.run.withSuccessHandler(data=>{
   batch.innerHTML='<option value="">Choose a participant list</option>';
   (data.tabs||[]).forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;batch.appendChild(o)});
   show(loadmsg,'Connected to spreadsheet: '+data.spreadsheetName,'ok');
+  loadCurrentSession();
  }).withFailureHandler(e=>show(loadmsg,e.message||String(e),'err')).getInitialData();
+}
+function loadCurrentSession(){
+ google.script.run.withSuccessHandler(data=>{
+  activeSession.hidden=true;active=null;
+  if(data.available&&data.sessions&&data.sessions.length){
+    active=data.sessions[0];
+    document.getElementById('sessionHeading').textContent=active.day+' — '+active.session+' — '+active.date+' ('+active.open+'–'+active.close+')';
+    activeSession.hidden=false;
+    show(sessionInfo,'Attendance is OPEN for '+active.day+' — '+active.session+'. Submit only this session.','ok');
+  }else{
+    let detail=data.message||'No attendance session is open at this time.';
+    if(data.todaySessions&&data.todaySessions.length)detail+=' '+data.todaySessions.map(s=>s.session+': '+s.open+'–'+s.close).join(' | ');
+    show(sessionInfo,detail,'info');
+  }
+ }).withFailureHandler(e=>show(sessionInfo,e.message||String(e),'err')).getCurrentAttendanceSession();
 }
 batch.addEventListener('change',()=>{
  participant.disabled=true;participant.innerHTML='<option value="">Loading participants…</option>';people=[];document.getElementById('person').hidden=true;
@@ -62,7 +79,7 @@ batch.addEventListener('change',()=>{
   people=rows||[];participant.innerHTML='<option value="">Choose your name</option>';
   people.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name+(p.school?' — '+p.school:'');participant.appendChild(o)});
   participant.disabled=false;
-  if(!people.length)show(message,'No participants were found in this worksheet. Check that row 1 contains a participant-name header.','err');
+  if(!people.length)show(message,'No participants were found in this worksheet. Check the participant-name header.','err');
   else show(message,people.length+' participant records loaded.','info');
  }).withFailureHandler(e=>{participant.innerHTML='<option value="">Unable to load participants</option>';show(message,e.message||String(e),'err')}).getParticipants(batch.value);
 });
@@ -70,20 +87,26 @@ participant.addEventListener('change',()=>{
  const p=people.find(x=>x.id===participant.value),box=document.getElementById('person');
  box.hidden=!p;if(p){document.getElementById('pname').textContent=p.name;document.getElementById('pschool').textContent=p.school||'School not identified in sheet';}
 });
-document.querySelectorAll('.day button').forEach(btn=>btn.addEventListener('click',()=>{
- const day=btn.closest('.day').dataset.day,session=btn.closest('.session').dataset.session,key=day+'_'+session;chosen[key]=btn.dataset.status;
- btn.closest('.session').querySelectorAll('button').forEach(b=>{b.classList.toggle('selected',b===btn);b.setAttribute('aria-pressed',String(b===btn))});
-}));
-document.getElementById('reset').addEventListener('click',()=>{
- Object.keys(chosen).forEach(k=>delete chosen[k]);document.querySelectorAll('.day button').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false')});show(message,'Selections cleared.','info');
-});
+function chooseStatus(status){
+ selectedStatus=status;
+ document.getElementById('markPresent').classList.toggle('selected',status==='Present');
+ document.getElementById('markAbsent').classList.toggle('selected',status==='Absent');
+ document.getElementById('markPresent').setAttribute('aria-pressed',String(status==='Present'));
+ document.getElementById('markAbsent').setAttribute('aria-pressed',String(status==='Absent'));
+}
+document.getElementById('markPresent').addEventListener('click',()=>chooseStatus('Present'));
+document.getElementById('markAbsent').addEventListener('click',()=>chooseStatus('Absent'));
+document.getElementById('reset').addEventListener('click',()=>{chooseStatus('');show(message,'Selection cleared.','info')});
 document.getElementById('submit').addEventListener('click',()=>{
  if(!batch.value||!participant.value){show(message,'Please select your participant list and your name.','err');return}
- if(Object.keys(chosen).length!==10){show(message,'Please choose Present or Absent for all 10 sessions: five forenoon and five afternoon sessions.','err');return}
+ if(!active){show(message,'There is no open attendance session right now.','err');return}
+ if(!selectedStatus){show(message,'Select Present or Absent for the current session only.','err');return}
  const btn=document.getElementById('submit');btn.disabled=true;btn.textContent='Submitting…';
- google.script.run.withSuccessHandler(result=>{show(message,result.message||'Attendance processed.','ok');btn.disabled=false;btn.textContent='Submit attendance'})
- .withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent='Submit attendance'})
- .submitAttendance({sheetName:batch.value,participantId:participant.value,statuses:chosen});
+ google.script.run.withSuccessHandler(result=>{
+  show(message,result.message||'Attendance saved.','ok');btn.disabled=false;btn.textContent="Submit this session's attendance";chooseStatus('');
+  loadCurrentSession();
+ }).withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent="Submit this session's attendance"})
+ .submitAttendance({sheetName:batch.value,participantId:participant.value,dayNumber:active.dayNumber,sessionCode:active.sessionCode,status:selectedStatus});
 });
 loadLists();
 </script>
