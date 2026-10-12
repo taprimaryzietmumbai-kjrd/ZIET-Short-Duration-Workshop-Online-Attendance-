@@ -138,14 +138,44 @@ function getAttendanceSettings_() {
       sh.getRange(1, 1, 11, 5).setValues([headers].concat(rows));
     }
   }
-  const rows = sh.getRange(2, 1, 10, 5).getDisplayValues();
-  return rows.map((r, i) => ({
-    day: r[0] || ('Day ' + (Math.floor(i / 2) + 1)),
-    session: r[1] || (i % 2 === 0 ? 'Forenoon' : 'Afternoon'),
-    date: String(r[2] || '').trim(),
-    open: String(r[3] || '').trim() || (i % 2 === 0 ? '09:00' : '13:00'),
-    close: String(r[4] || '').trim() || (i % 2 === 0 ? '12:30' : '17:00')
+  // Read underlying cell values so display formats like 12.10.2026 remain unchanged.
+  const range = sh.getRange(2, 1, 10, 5);
+  const rawRows = range.getValues();
+  const displayRows = range.getDisplayValues();
+  return rawRows.map((r, i) => ({
+    day: String(displayRows[i][0] || r[0] || ('Day ' + (Math.floor(i / 2) + 1))).trim(),
+    session: String(displayRows[i][1] || r[1] || (i % 2 === 0 ? 'Forenoon' : 'Afternoon')).trim(),
+    date: normalizeWorkshopDate_(r[2], displayRows[i][2]),
+    open: normalizeTime_(r[3], displayRows[i][3]) || (i % 2 === 0 ? '09:00' : '13:00'),
+    close: normalizeTime_(r[4], displayRows[i][4]) || (i % 2 === 0 ? '12:30' : '17:00')
   }));
+}
+
+function normalizeWorkshopDate_(rawValue, displayedValue) {
+  if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
+    return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+  const s = String(displayedValue || rawValue || '').trim();
+  if (!s) return '';
+  let m = s.match(/^(\\d{1,2})[.\\/\\-](\\d{1,2})[.\\/\\-](\\d{4})$/);
+  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  m = s.match(/^(\\d{4})[.\\/\\-](\\d{1,2})[.\\/\\-](\\d{1,2})$/);
+  if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  return s;
+}
+
+function normalizeTime_(rawValue, displayedValue) {
+  if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
+    return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), 'HH:mm');
+  }
+  const s = String(displayedValue || rawValue || '').trim();
+  const m = s.match(/^(\\d{1,2}):(\\d{2})(?::\\d{2})?\\s*(AM|PM)?$/i);
+  if (!m) return s;
+  let hour = Number(m[1]), minute = Number(m[2]);
+  const ap = (m[3] || '').toUpperCase();
+  if (ap === 'PM' && hour < 12) hour += 12;
+  if (ap === 'AM' && hour === 12) hour = 0;
+  return ('0' + hour).slice(-2) + ':' + ('0' + minute).slice(-2);
 }
 
 function makeDefaultSettingsRows_() {
