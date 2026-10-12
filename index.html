@@ -15,14 +15,14 @@ label{display:block;font-weight:650;margin:0 0 6px}select{width:100%;min-height:
 button{min-height:42px;padding:9px 14px;border:0;border-radius:8px;font:inherit;font-weight:700;cursor:pointer}
 button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--navy);color:#fff}.present{background:#e1f5e9;color:#116b41;border:1px solid #8bd1aa}.absent{background:#fde8e8;color:#a52832;border:1px solid #efadb1}
 button.selected{box-shadow:inset 0 0 0 2px currentColor}.person{margin-top:14px;background:#f8fbff;border:1px solid var(--line);border-radius:9px;padding:14px}.school,.muted{color:var(--muted);font-size:.92rem}
-.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.day{border:1px solid var(--line);border-radius:10px;padding:11px;text-align:center}.day strong{display:block;color:var(--navy);margin-bottom:8px}.actions{display:grid;gap:7px}.actions button{padding:8px 3px}
+.days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.day{border:1px solid var(--line);border-radius:10px;padding:12px}.day>strong{display:block;color:var(--navy);margin-bottom:10px;font-size:1.05rem}.session{padding:9px 0;border-top:1px solid var(--line)}.session>span{display:block;font-weight:650;font-size:.92rem;margin-bottom:7px}.actions{display:flex;gap:8px}.actions button{flex:1;padding:8px 3px}
 .toolbar{display:flex;gap:10px;margin-top:16px}.toolbar button{flex:1}.message{display:none;padding:12px;border-radius:8px;margin-top:14px;white-space:pre-wrap}.message.show{display:block}.ok{background:#e1f5e9;color:#116b41}.err{background:#fde8e8;color:#a52832}.info{background:#eaf3ff;color:#17477e}
 footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9rem}
 @media(max-width:700px){.grid{grid-template-columns:1fr}.days{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}}@media(max-width:390px){.days{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><div>KENDRIYA VIDYALAYA SANGATHAN</div><h1>Workshop Online Attendance</h1><p>Zonal Institute of Education &amp; Training, Mumbai</p><p>Five-day participant attendance</p></header>
+<header><div>KENDRIYA VIDYALAYA SANGATHAN</div><h1>Workshop Online Attendance</h1><p>Zonal Institute of Education &amp; Training, Mumbai</p><p>Five-day · Forenoon &amp; Afternoon attendance</p></header>
 <main>
 <section class="card"><h2>1. Select your participant record</h2>
 <div class="grid"><div><label for="batch">Participant list / worksheet</label><select id="batch"><option value="">Loading lists…</option></select></div>
@@ -30,9 +30,13 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
 <div id="person" class="person" hidden><strong id="pname"></strong><div id="pschool" class="school"></div></div>
 <div id="loadmsg" class="message info show">Connecting to the attendance service…</div>
 </section>
-<section class="card"><h2>2. Mark attendance</h2><p class="muted">Choose Present or Absent for each day. Your attendance is saved only when the configured date and time window allows it.</p>
+<section class="card"><h2>2. Mark attendance</h2><p class="muted">Record attendance separately for each session: पूर्वाह्न (Forenoon) and अपराह्न (Afternoon), for every workshop day. Each session is validated against its own date and time window.</p>
 <div class="days" id="days">
-<div class="day" data-day="1"><strong>Day 1</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="2"><strong>Day 2</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="3"><strong>Day 3</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="4"><strong>Day 4</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="day" data-day="5"><strong>Day 5</strong><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div>
+<div class="day" data-day="1"><strong>Day 1</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
+<div class="day" data-day="2"><strong>Day 2</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
+<div class="day" data-day="3"><strong>Day 3</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
+<div class="day" data-day="4"><strong>Day 4</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
+<div class="day" data-day="5"><strong>Day 5</strong><div class="session" data-session="FN"><span>पूर्वाह्न (Forenoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div><div class="session" data-session="AN"><span>अपराह्न (Afternoon)</span><div class="actions"><button type="button" class="present" data-status="Present" aria-pressed="false">Present</button><button type="button" class="absent" data-status="Absent" aria-pressed="false">Absent</button></div></div></div>
 </div>
 <div class="toolbar"><button class="primary" id="submit" type="button">Submit attendance</button><button id="reset" type="button">Clear selections</button></div>
 <div id="message" class="message" role="status" aria-live="polite"></div>
@@ -67,15 +71,15 @@ participant.addEventListener('change',()=>{
  box.hidden=!p;if(p){document.getElementById('pname').textContent=p.name;document.getElementById('pschool').textContent=p.school||'School not identified in sheet';}
 });
 document.querySelectorAll('.day button').forEach(btn=>btn.addEventListener('click',()=>{
- const d=btn.closest('.day').dataset.day;chosen[d]=btn.dataset.status;
- btn.closest('.day').querySelectorAll('button').forEach(b=>{b.classList.toggle('selected',b===btn);b.setAttribute('aria-pressed',String(b===btn))});
+ const day=btn.closest('.day').dataset.day,session=btn.closest('.session').dataset.session,key=day+'_'+session;chosen[key]=btn.dataset.status;
+ btn.closest('.session').querySelectorAll('button').forEach(b=>{b.classList.toggle('selected',b===btn);b.setAttribute('aria-pressed',String(b===btn))});
 }));
 document.getElementById('reset').addEventListener('click',()=>{
  Object.keys(chosen).forEach(k=>delete chosen[k]);document.querySelectorAll('.day button').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false')});show(message,'Selections cleared.','info');
 });
 document.getElementById('submit').addEventListener('click',()=>{
  if(!batch.value||!participant.value){show(message,'Please select your participant list and your name.','err');return}
- if(Object.keys(chosen).length!==5){show(message,'Please choose Present or Absent for all five days.','err');return}
+ if(Object.keys(chosen).length!==10){show(message,'Please choose Present or Absent for all 10 sessions: five forenoon and five afternoon sessions.','err');return}
  const btn=document.getElementById('submit');btn.disabled=true;btn.textContent='Submitting…';
  google.script.run.withSuccessHandler(result=>{show(message,result.message||'Attendance processed.','ok');btn.disabled=false;btn.textContent='Submit attendance'})
  .withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent='Submit attendance'})
