@@ -166,17 +166,30 @@ function normalizeWorkshopDate_(rawValue, displayedValue) {
 }
 
 function normalizeTime_(rawValue, displayedValue) {
-  if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
-    return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), 'HH:mm');
+  // Prefer the visible value when it contains a clear clock time (e.g. 2:00:00 PM).
+  // Return a 24-hour HH:mm string for reliable string comparisons.
+  const s = String(displayedValue || '').trim();
+  const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (m) {
+    let hour = Number(m[1]), minute = Number(m[2]);
+    const ap = (m[4] || '').toUpperCase();
+    if (ap === 'PM' && hour < 12) hour += 12;
+    if (ap === 'AM' && hour === 12) hour = 0;
+    return ('0' + hour).slice(-2) + ':' + ('0' + minute).slice(-2);
   }
-  const s = String(displayedValue || rawValue || '').trim();
-  const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
-  if (!m) return s;
-  let hour = Number(m[1]), minute = Number(m[2]);
-  const ap = (m[3] || '').toUpperCase();
-  if (ap === 'PM' && hour < 12) hour += 12;
-  if (ap === 'AM' && hour === 12) hour = 0;
-  return ('0' + hour).slice(-2) + ':' + ('0' + minute).slice(-2);
+  if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
+    return Utilities.formatDate(rawValue, 'Asia/Kolkata', 'HH:mm');
+  }
+  const fallback = String(rawValue || '').trim();
+  const mf = fallback.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (mf) {
+    let hour = Number(mf[1]), minute = Number(mf[2]);
+    const ap = (mf[4] || '').toUpperCase();
+    if (ap === 'PM' && hour < 12) hour += 12;
+    if (ap === 'AM' && hour === 12) hour = 0;
+    return ('0' + hour).slice(-2) + ':' + ('0' + minute).slice(-2);
+  }
+  return fallback;
 }
 
 function makeDefaultSettingsRows_() {
@@ -191,7 +204,7 @@ function makeDefaultSettingsRows_() {
 function getCurrentAttendanceSession() {
   const settings = getAttendanceSettings_();
   const now = new Date();
-  const tz = Session.getScriptTimeZone();
+  const tz = 'Asia/Kolkata';
   const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
   const matching = [];
