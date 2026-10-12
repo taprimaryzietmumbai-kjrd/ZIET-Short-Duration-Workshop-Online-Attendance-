@@ -34,7 +34,8 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
 <p class="muted">Attendance is recorded one session at a time. During पूर्वाह्न (Forenoon), submit only the forenoon status. During अपराह्न (Afternoon), submit only the afternoon status. You do not need to mark future sessions.</p>
 <div id="sessionInfo" class="message info show">Checking which attendance session is open…</div>
 <div id="activeSession" hidden>
-<div class="day" style="margin-top:14px;text-align:left"><strong id="sessionHeading">Current session</strong>
+<label for="sessionChoice" style="display:block;margin-top:14px">Choose one session to record</label><select id="sessionChoice" style="width:100%;min-height:44px;padding:10px;border:1px solid #bdcadd;border-radius:8px;font:inherit;background:#fff;color:#1e293b"></select>
+<div class="day" style="margin-top:14px;text-align:left"><strong id="sessionHeading">Selected session</strong>
 <div class="actions" style="display:flex;gap:10px"><button type="button" class="present" id="markPresent" aria-pressed="false">Present</button><button type="button" class="absent" id="markAbsent" aria-pressed="false">Absent</button></div>
 </div>
 <div class="toolbar"><button class="primary" id="submit" type="button">Submit this session's attendance</button><button id="reset" type="button">Clear selection</button></div>
@@ -57,21 +58,45 @@ function loadLists(){
   loadCurrentSession();
  }).withFailureHandler(e=>show(loadmsg,e.message||String(e),'err')).getInitialData();
 }
-function loadCurrentSession(){
+function loadCurrentSession(preferredCode){
  google.script.run.withSuccessHandler(data=>{
   activeSession.hidden=true;active=null;
+  const select=document.getElementById('sessionChoice');
+  select.innerHTML='';
   if(data.available&&data.sessions&&data.sessions.length){
-    active=data.sessions[0];
-    document.getElementById('sessionHeading').textContent=active.day+' — '+active.session+' — '+active.date+' ('+active.open+'–'+active.close+')';
+    data.sessions.forEach(s=>{
+      const o=document.createElement('option');
+      o.value=s.dayNumber+'_'+s.sessionCode;
+      o.textContent=s.day+' — '+s.session+' ('+s.open+'–'+s.close+')'+(s.currentlyWithinWindow?' — current time window':'');
+      select.appendChild(o);
+    });
+    const preferred=data.sessions.find(s=>s.sessionCode===preferredCode);
+    select.value=preferred?preferred.dayNumber+'_'+preferred.sessionCode:select.options[0].value;
     activeSession.hidden=false;
-    show(sessionInfo,'Attendance is OPEN for '+active.day+' — '+active.session+'. Submit only this session.','ok');
+    updateSelectedSession();
+    show(sessionInfo,'Today has '+data.sessions.length+' session(s). Select one session, submit its attendance, then select the other session separately.','ok');
   }else{
-    let detail=data.message||'No attendance session is open at this time.';
-    if(data.todaySessions&&data.todaySessions.length)detail+=' '+data.todaySessions.map(s=>s.session+': '+s.open+'–'+s.close).join(' | ');
+    let detail=data.message||'No workshop attendance session is configured for today.';
     show(sessionInfo,detail,'info');
   }
  }).withFailureHandler(e=>show(sessionInfo,e.message||String(e),'err')).getCurrentAttendanceSession();
 }
+function updateSelectedSession(){
+ const value=document.getElementById('sessionChoice').value;
+ active=null;
+ if(value){
+  const parts=value.split('_');
+  const dayNumber=Number(parts[0]),sessionCode=parts[1];
+  const select=document.getElementById('sessionChoice');
+  const option=select.options[select.selectedIndex];
+  const label=option?option.textContent:'';
+  active={dayNumber:dayNumber,sessionCode:sessionCode,day:'Day '+dayNumber,session:sessionCode==='FN'?'Forenoon (पूर्वाह्न)':'Afternoon (अपराह्न)',date:'',open:'',close:''};
+  document.getElementById('sessionHeading').textContent=label;
+  chooseStatus('');
+ }
+}
+document.getElementById('sessionChoice').addEventListener('change',updateSelectedSession);
+
 batch.addEventListener('change',()=>{
  participant.disabled=true;participant.innerHTML='<option value="">Loading participants…</option>';people=[];document.getElementById('person').hidden=true;
  if(!batch.value){participant.innerHTML='<option value="">Select a list first</option>';return}
@@ -104,7 +129,7 @@ document.getElementById('submit').addEventListener('click',()=>{
  const btn=document.getElementById('submit');btn.disabled=true;btn.textContent='Submitting…';
  google.script.run.withSuccessHandler(result=>{
   show(message,result.message||'Attendance saved.','ok');btn.disabled=false;btn.textContent="Submit this session's attendance";chooseStatus('');
-  loadCurrentSession();
+  const submittedCode=active?active.sessionCode:'';loadCurrentSession(submittedCode);
  }).withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent="Submit this session's attendance"})
  .submitAttendance({sheetName:batch.value,participantId:participant.value,dayNumber:active.dayNumber,sessionCode:active.sessionCode,status:selectedStatus});
 });
