@@ -3,51 +3,167 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b2850">
-<title>ZIET Mumbai | Workshop Online Attendance</title>
+<title>ZIET Mumbai | Workshop Attendance</title>
 <style>
-:root{color-scheme:light;--navy:#0b2850;--gold:#f0a52b;--bg:#f3f6fb;--ink:#1e293b;--muted:#64748b}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font:16px/1.5 "Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg)}
-header{padding:16px 12px;text-align:center;color:#fff;background:linear-gradient(130deg,#0b2850,#123b6d);border-bottom:4px solid var(--gold)}
-header .org{font-size:.9rem;letter-spacing:.04em;font-weight:700}
-header h1{font-size:clamp(1.35rem,3vw,2rem);margin:4px 0}
-header p{margin:0;color:#e6eef8}
-main{width:min(1100px,100%);margin:0 auto;padding:12px}
-.status{margin:0 0 10px;padding:10px 13px;border-radius:8px;background:#eaf3ff;color:#17477e;font-size:.92rem}
-.frame-wrap{background:#fff;border:1px solid #dbe3ef;border-radius:12px;overflow:hidden;box-shadow:0 6px 22px #123b6d0d}
-iframe{display:block;width:100%;height:calc(100vh - 190px);min-height:760px;border:0;background:#f3f6fb}
-.fallback{padding:16px;text-align:center;color:var(--muted);font-size:.92rem}
-.fallback a{color:#123b6d;font-weight:700}
-footer{text-align:center;padding:8px 12px 18px;color:var(--muted);font-size:.85rem}
-@media(max-width:600px){main{padding:8px}.status{font-size:.86rem}iframe{height:calc(100vh - 170px);min-height:900px}}
+:root{--navy:#123b6d;--deep:#0b2850;--gold:#f0a52b;--bg:#f3f6fb;--ink:#1e293b;--muted:#64748b;--line:#dbe3ef;--green:#168653;--red:#c63d46}
+*{box-sizing:border-box}body{margin:0;font:16px/1.55 "Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:26px 16px;text-align:center;color:white;background:linear-gradient(130deg,var(--deep),var(--navy));border-bottom:5px solid var(--gold)}
+header h1{margin:6px 0;font-size:clamp(1.5rem,4vw,2.15rem)}header p{margin:4px;color:#e6eef8}
+main{width:min(940px,calc(100% - 24px));margin:24px auto}.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:22px;margin-bottom:18px;box-shadow:0 6px 22px #123b6d0d}
+h2{margin:0 0 14px;color:var(--navy);font-size:1.2rem}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-weight:650;margin:0 0 6px}select{width:100%;min-height:44px;padding:10px;border:1px solid #bdcadd;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+button{min-height:42px;padding:9px 14px;border:0;border-radius:8px;font:inherit;font-weight:700;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--navy);color:#fff}.present{background:#e1f5e9;color:#116b41;border:1px solid #8bd1aa}.absent{background:#fde8e8;color:#a52832;border:1px solid #efadb1}
+button.selected{box-shadow:inset 0 0 0 2px currentColor}.person{margin-top:14px;background:#f8fbff;border:1px solid var(--line);border-radius:9px;padding:14px}.school,.muted{color:var(--muted);font-size:.92rem}
+.days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.day{border:1px solid var(--line);border-radius:10px;padding:12px}.day>strong{display:block;color:var(--navy);margin-bottom:10px;font-size:1.05rem}.session{padding:9px 0;border-top:1px solid var(--line)}.session>span{display:block;font-weight:650;font-size:.92rem;margin-bottom:7px}.actions{display:flex;gap:8px}.actions button{flex:1;padding:8px 3px}
+.toolbar{display:flex;gap:10px;margin-top:16px}.toolbar button{flex:1}
+.signatureBox{margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fbfdff}
+.signatureTools{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+#signatureCanvas{display:block;width:100%;height:170px;background:#fff;border:1px dashed #7c8da6;border-radius:8px;touch-action:none}
+.signatureHint{font-size:.88rem;color:var(--muted);margin:6px 0}
+input[type=file]{max-width:100%;font:inherit}.message{display:none;padding:12px;border-radius:8px;margin-top:14px;white-space:pre-wrap}.message.show{display:block}.ok{background:#e1f5e9;color:#116b41}.err{background:#fde8e8;color:#a52832}.info{background:#eaf3ff;color:#17477e}
+footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9rem}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.days{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}}@media(max-width:390px){.days{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header>
-  <div class="org">KENDRIYA VIDYALAYA SANGATHAN</div>
-  <h1>Workshop Online Attendance</h1>
-  <p>Zonal Institute of Education &amp; Training, Mumbai</p>
-</header>
+<header><div>KENDRIYA VIDYALAYA SANGATHAN</div><h1>Workshop Online Attendance</h1><p>Zonal Institute of Education &amp; Training, Mumbai</p><p>Five-day · Forenoon &amp; Afternoon attendance</p></header>
 <main>
-  <p class="status" id="status">Connecting to the secure attendance application…</p>
-  <div class="frame-wrap">
-    <iframe
-      id="attendanceApp"
-      title="ZIET Mumbai Workshop Online Attendance"
-      src="https://script.google.com/macros/s/AKfycbz0vgXCWrCAvJX_YaZ4tk7atjS7j9VQPVHfKKy4fuVs1DWuSW3los4E9TyG2L0pHif-/exec"
-      loading="eager"
-      allow="clipboard-read; clipboard-write"
-      referrerpolicy="strict-origin-when-cross-origin">
-    </iframe>
-  </div>
-  <div class="fallback">If the attendance form does not appear, <a href="https://script.google.com/macros/s/AKfycbz0vgXCWrCAvJX_YaZ4tk7atjS7j9VQPVHfKKy4fuVs1DWuSW3los4E9TyG2L0pHif-/exec" target="_blank" rel="noopener noreferrer">open the attendance application directly</a>.</div>
-</main>
-<footer>KVS · ZIET Mumbai · Workshop Attendance</footer>
+<section class="card"><h2>1. Select your participant record</h2>
+<div class="grid"><div><label for="batch">Participant list / worksheet</label><select id="batch"><option value="">Loading lists…</option></select></div>
+<div><label for="participant">Participant name and school</label><select id="participant" disabled><option value="">Select a list first</option></select></div></div>
+<div id="person" class="person" hidden><strong id="pname"></strong><div id="pschool" class="school"></div></div>
+<div id="loadmsg" class="message info show">Connecting to the attendance service…</div>
+</section>
+<section class="card"><h2>2. Mark attendance for the current session</h2>
+<p class="muted">Attendance is recorded one session at a time. During पूर्वाह्न (Forenoon), submit only the forenoon status. During अपराह्न (Afternoon), submit only the afternoon status. You do not need to mark future sessions.</p>
+<div id="sessionInfo" class="message info show">Checking which attendance session is open…</div>
+<div id="activeSession" hidden>
+<label for="sessionChoice" style="display:block;margin-top:14px">Choose one session to record</label><select id="sessionChoice" style="width:100%;min-height:44px;padding:10px;border:1px solid #bdcadd;border-radius:8px;font:inherit;background:#fff;color:#1e293b"></select>
+<div class="day" style="margin-top:14px;text-align:left"><strong id="sessionHeading">Selected session</strong>
+<div class="actions" style="display:flex;gap:10px"><button type="button" class="present" id="markPresent" aria-pressed="false">Present</button><button type="button" class="absent" id="markAbsent" aria-pressed="false">Absent</button></div>
+</div>
+<div class="signatureBox">
+<strong>3. Participant signature / प्रतिभागी के हस्ताक्षर</strong>
+<p class="signatureHint">Sign in the box using your finger or mouse. A signature is required for each session.</p>
+<canvas id="signatureCanvas" width="900" height="300" aria-label="Draw your signature here"></canvas>
+<div class="signatureTools"><button type="button" id="clearSignature">Clear signature</button></div>
+<div id="signatureStatus" class="signatureHint">No signature added yet.</div>
+</div>
+<div class="toolbar"><button class="primary" id="submit" type="button">Submit this session's attendance</button><button id="reset" type="button">Clear selection</button></div>
+</div>
+<div id="message" class="message" role="status" aria-live="polite"></div>
+</section>
+<section class="card"><h2>Attendance policy</h2><p class="muted">Participant names and school details are loaded from the connected Google Sheet. Do not submit attendance for another participant. If a day is unavailable, the organiser must configure its date and attendance window in the Attendance_Settings sheet.</p></section>
+</main><footer>KVS · ZIET Mumbai · Workshop Attendance</footer>
 <script>
-const frame=document.getElementById('attendanceApp');
-const status=document.getElementById('status');
-frame.addEventListener('load',()=>{status.textContent='Attendance application loaded. Select your participant list and name below.';status.style.background='#e1f5e9';status.style.color='#116b41';});
+const batch=document.getElementById('batch'),participant=document.getElementById('participant'),message=document.getElementById('message'),loadmsg=document.getElementById('loadmsg');
+const sessionInfo=document.getElementById('sessionInfo'),activeSession=document.getElementById('activeSession');
+let people=[],active=null,selectedStatus='';
+function show(el,text,kind){el.textContent=text;el.className='message show '+kind}
+function loadLists(){
+ if(!(window.google&&google.script&&google.script.run)){show(loadmsg,'Open this application using the deployed Google Apps Script web-app URL, not GitHub Pages.','err');return}
+ google.script.run.withSuccessHandler(data=>{
+  batch.innerHTML='<option value="">Choose a participant list</option>';
+  (data.tabs||[]).forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;batch.appendChild(o)});
+  show(loadmsg,'Connected to spreadsheet: '+data.spreadsheetName,'ok');
+  loadCurrentSession();
+ }).withFailureHandler(e=>show(loadmsg,e.message||String(e),'err')).getInitialData();
+}
+function loadCurrentSession(preferredCode){
+ google.script.run.withSuccessHandler(data=>{
+  activeSession.hidden=true;active=null;
+  const select=document.getElementById('sessionChoice');
+  select.innerHTML='';
+  if(data.available&&data.sessions&&data.sessions.length){
+    data.sessions.forEach(s=>{
+      const o=document.createElement('option');
+      o.value=s.dayNumber+'_'+s.sessionCode;
+      o.textContent=s.day+' — '+s.session+' ('+s.open+'–'+s.close+')'+(s.currentlyWithinWindow?' — current time window':'');
+      select.appendChild(o);
+    });
+    const preferred=data.sessions.find(s=>s.sessionCode===preferredCode);
+    select.value=preferred?preferred.dayNumber+'_'+preferred.sessionCode:select.options[0].value;
+    activeSession.hidden=false;
+    updateSelectedSession();
+    show(sessionInfo,'Today has '+data.sessions.length+' session(s). Select one session, submit its attendance, then select the other session separately.','ok');
+  }else{
+    let detail=data.message||'No workshop attendance session is configured for today.';
+    show(sessionInfo,detail,'info');
+  }
+ }).withFailureHandler(e=>show(sessionInfo,e.message||String(e),'err')).getCurrentAttendanceSession();
+}
+function updateSelectedSession(){
+ const value=document.getElementById('sessionChoice').value;
+ active=null;
+ if(value){
+  const parts=value.split('_');
+  const dayNumber=Number(parts[0]),sessionCode=parts[1];
+  const select=document.getElementById('sessionChoice');
+  const option=select.options[select.selectedIndex];
+  const label=option?option.textContent:'';
+  active={dayNumber:dayNumber,sessionCode:sessionCode,day:'Day '+dayNumber,session:sessionCode==='FN'?'Forenoon (पूर्वाह्न)':'Afternoon (अपराह्न)',date:'',open:'',close:''};
+  document.getElementById('sessionHeading').textContent=label;
+  chooseStatus('');
+ }
+}
+document.getElementById('sessionChoice').addEventListener('change',updateSelectedSession);
+
+batch.addEventListener('change',()=>{
+ participant.disabled=true;participant.innerHTML='<option value="">Loading participants…</option>';people=[];document.getElementById('person').hidden=true;
+ if(!batch.value){participant.innerHTML='<option value="">Select a list first</option>';return}
+ google.script.run.withSuccessHandler(rows=>{
+  people=rows||[];participant.innerHTML='<option value="">Choose your name</option>';
+  people.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name+(p.school?' — '+p.school:'');participant.appendChild(o)});
+  participant.disabled=false;
+  if(!people.length)show(message,'No participants were found in this worksheet. Check the participant-name header.','err');
+  else show(message,people.length+' participant records loaded.','info');
+ }).withFailureHandler(e=>{participant.innerHTML='<option value="">Unable to load participants</option>';show(message,e.message||String(e),'err')}).getParticipants(batch.value);
+});
+participant.addEventListener('change',()=>{
+ const p=people.find(x=>x.id===participant.value),box=document.getElementById('person');
+ box.hidden=!p;if(p){document.getElementById('pname').textContent=p.name;document.getElementById('pschool').textContent=p.school||'School not identified in sheet';}
+});
+function chooseStatus(status){
+ selectedStatus=status;
+ document.getElementById('markPresent').classList.toggle('selected',status==='Present');
+ document.getElementById('markAbsent').classList.toggle('selected',status==='Absent');
+ document.getElementById('markPresent').setAttribute('aria-pressed',String(status==='Present'));
+ document.getElementById('markAbsent').setAttribute('aria-pressed',String(status==='Absent'));
+}
+document.getElementById('markPresent').addEventListener('click',()=>chooseStatus('Present'));
+document.getElementById('markAbsent').addEventListener('click',()=>chooseStatus('Absent'));
+document.getElementById('reset').addEventListener('click',()=>{chooseStatus('');show(message,'Selection cleared.','info')});
+
+const canvas=document.getElementById('signatureCanvas'),ctx=canvas.getContext('2d');
+let drawing=false,signatureHasInk=false;
+function resetCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#102a43';signatureHasInk=false;document.getElementById('signatureStatus').textContent='No signature added yet.';}
+function canvasPoint(event){const rect=canvas.getBoundingClientRect();return {x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};}
+canvas.addEventListener('pointerdown',e=>{drawing=true;canvas.setPointerCapture(e.pointerId);const p=canvasPoint(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+0.1,p.y+0.1);ctx.stroke();signatureHasInk=true;document.getElementById('signatureStatus').textContent='Signature drawn.';});
+canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=canvasPoint(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+canvas.addEventListener('pointerup',()=>{drawing=false;});
+canvas.addEventListener('pointercancel',()=>{drawing=false;});
+document.getElementById('clearSignature').addEventListener('click',resetCanvas);
+document.getElementById('signatureUpload').addEventListener('change',e=>{
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ if(!/^image\/(png|jpeg)$/.test(file.type)){show(message,'Upload a PNG or JPEG signature image.','err');e.target.value='';return;}
+ if(file.size>1500000){show(message,'Please upload a signature image under 1.5 MB.','err');e.target.value='';return;}
+ const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{resetCanvas();const scale=Math.min((canvas.width-40)/img.width,(canvas.height-40)/img.height);const w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);signatureHasInk=true;uploadedSignatureData='';document.getElementById('signatureStatus').textContent='Uploaded signature loaded into the signing box.';};img.src=reader.result;};reader.readAsDataURL(file);
+});
+function signatureData(){if(uploadedSignatureData)return uploadedSignatureData;if(!signatureHasInk)return '';return canvas.toDataURL('image/png');}
+
+document.getElementById('submit').addEventListener('click',()=>{
+ if(!batch.value||!participant.value){show(message,'Please select your participant list and your name.','err');return}
+ if(!active){show(message,'There is no open attendance session right now.','err');return}
+ if(!selectedStatus){show(message,'Select Present or Absent for the current session only.','err');return}
+ if(!signatureData()){show(message,'Please draw your signature for this session before submitting.','err');return}
+ const btn=document.getElementById('submit');btn.disabled=true;btn.textContent='Submitting…';
+ google.script.run.withSuccessHandler(result=>{
+  show(message,result.message||'Attendance saved.','ok');btn.disabled=false;btn.textContent="Submit this session's attendance";chooseStatus('');resetCanvas();
+  const submittedCode=active?active.sessionCode:'';loadCurrentSession(submittedCode);
+ }).withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent="Submit this session's attendance"})
+ .submitAttendance({sheetName:batch.value,participantId:participant.value,dayNumber:active.dayNumber,sessionCode:active.sessionCode,status:selectedStatus,signatureDataUrl:signatureData()});
+});
+loadLists();
 </script>
-</body>
-</html>
+</body></html>
