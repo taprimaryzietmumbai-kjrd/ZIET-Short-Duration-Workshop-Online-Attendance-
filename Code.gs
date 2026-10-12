@@ -5,7 +5,8 @@ const SETTINGS_SHEET = 'Attendance_Settings';
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('ZIET Mumbai | Workshop Attendance')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function getInitialData() {
@@ -28,8 +29,6 @@ function getParticipants(sheetName) {
   const values = sh.getDataRange().getDisplayValues();
   if (!values.length) return [];
 
-  // Some participant sheets have a title or merged heading above the column headers.
-  // Scan the first 10 rows and use the row that best identifies participant names.
   let headerRowIndex = -1;
   let nameIndex = -1;
   let schoolIndex = -1;
@@ -72,7 +71,6 @@ function getParticipants(sheetName) {
   }
 
   return values.slice(headerRowIndex + 1).map((row, offset) => ({
-    // Actual row number in the sheet, used as a stable participant row identifier.
     id: String(headerRowIndex + offset + 2),
     name: String(row[nameIndex] || '').trim(),
     school: schoolIndex >= 0 ? String(row[schoolIndex] || '').trim() : ''
@@ -94,7 +92,6 @@ function findHeader_(headers, candidates) {
     const h = normalizeHeader_(headers[i]);
     if (normalizedCandidates.includes(h)) return i;
   }
-  // Allow variants such as "Name of the Teacher (as per KVS records)".
   for (let i = 0; i < headers.length; i++) {
     const h = normalizeHeader_(headers[i]);
     if (h && normalizedCandidates.some(c => c.length >= 4 && (h.includes(c) || c.includes(h)))) return i;
@@ -114,7 +111,6 @@ function getAttendanceSettings_() {
     const firstRow = sh.getRange(1, 1, 1, Math.max(5, sh.getLastColumn())).getDisplayValues()[0]
       .map(v => String(v).trim().toLowerCase());
     if (firstRow.indexOf('session') === -1 || firstRow.indexOf('date (yyyy-mm-dd)') === -1) {
-      // Upgrade the earlier five-day settings format without losing its configured dates/times.
       const oldRows = sh.getLastRow() > 1
         ? sh.getRange(2, 1, Math.min(5, sh.getLastRow() - 1), Math.min(4, sh.getLastColumn())).getDisplayValues()
         : [];
@@ -138,7 +134,6 @@ function getAttendanceSettings_() {
       sh.getRange(1, 1, 11, 5).setValues([headers].concat(rows));
     }
   }
-  // Read underlying cell values so display formats like 12.10.2026 remain unchanged.
   const range = sh.getRange(2, 1, 10, 5);
   const rawRows = range.getValues();
   const displayRows = range.getDisplayValues();
@@ -152,24 +147,21 @@ function getAttendanceSettings_() {
 }
 
 function normalizeWorkshopDate_(rawValue, displayedValue) {
-  // Preserve the sheet's visible date format; normalize only inside the app.
   if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
     return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   }
   const s = String(displayedValue || rawValue || '').trim();
   if (!s) return '';
-  let m = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  let m = s.match(/^(\\d{1,2})[.\\/-](\\d{1,2})[.\\/-](\\d{4})$/);
   if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
-  m = s.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
+  m = s.match(/^(\\d{4})[.\\/-](\\d{1,2})[.\\/-](\\d{1,2})$/);
   if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
   return s;
 }
 
 function normalizeTime_(rawValue, displayedValue) {
-  // Prefer the visible value when it contains a clear clock time (e.g. 2:00:00 PM).
-  // Return a 24-hour HH:mm string for reliable string comparisons.
   const s = String(displayedValue || '').trim();
-  const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  const m = s.match(/^(\\d{1,2}):(\\d{2})(?::(\\d{2}))?\\s*(AM|PM)?$/i);
   if (m) {
     let hour = Number(m[1]), minute = Number(m[2]);
     const ap = (m[4] || '').toUpperCase();
@@ -181,7 +173,7 @@ function normalizeTime_(rawValue, displayedValue) {
     return Utilities.formatDate(rawValue, 'Asia/Kolkata', 'HH:mm');
   }
   const fallback = String(rawValue || '').trim();
-  const mf = fallback.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  const mf = fallback.match(/^(\\d{1,2}):(\\d{2})(?::(\\d{2}))?\\s*(AM|PM)?$/i);
   if (mf) {
     let hour = Number(mf[1]), minute = Number(mf[2]);
     const ap = (mf[4] || '').toUpperCase();
@@ -207,8 +199,6 @@ function getCurrentAttendanceSession() {
   const tz = 'Asia/Kolkata';
   const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
-  // Show every session configured for today, even if the forenoon window has passed.
-  // This supports separate make-up recording for both sessions on the same workshop day.
   const sessions = settings.map((s, i) => ({
     dayNumber: Math.floor(i / 2) + 1,
     day: s.day,
@@ -233,7 +223,7 @@ function submitAttendance(payload) {
       !payload.dayNumber || !payload.sessionCode || !['Present', 'Absent'].includes(payload.status)) {
     throw new Error('Select your participant, attendance status, and session.');
   }
-  if (!payload.signatureDataUrl || !/^data:image\/(png|jpeg|jpg);base64,/.test(payload.signatureDataUrl)) {
+  if (!payload.signatureDataUrl || !/^data:image\\/(png|jpeg|jpg);base64,/.test(payload.signatureDataUrl)) {
     throw new Error('Please draw or upload your signature before submitting attendance.');
   }
   const dayNum = Number(payload.dayNumber);
@@ -282,25 +272,22 @@ function submitAttendance(payload) {
     throw new Error('Could not find the participant row in the selected worksheet.');
   }
 
-  // D:M are reserved for the 10 session signatures: Day 1 FN/AN ... Day 5 FN/AN.
   const signatureColumn = 4 + index;
   const signatureCell = participantSheet.getRange(participantRow, signatureColumn);
   const signatureCellA1 = signatureCell.getA1Notation();
 
   const dataUrlParts = payload.signatureDataUrl.split(',');
-  const mime = dataUrlParts[0].match(/^data:(image\/(?:png|jpeg|jpg));base64$/i);
+  const mime = dataUrlParts[0].match(/^data:(image\\/(?:png|jpeg|jpg));base64$/i);
   if (!mime || !dataUrlParts[1]) throw new Error('The signature image could not be read.');
   const imageBytes = Utilities.base64Decode(dataUrlParts[1]);
   if (imageBytes.length > 1500000) throw new Error('Please use a smaller signature image (under 1.5 MB).');
   const blob = Utilities.newBlob(imageBytes, mime[1].toLowerCase().replace('image/jpg','image/jpeg'),
     'signature_' + payload.participantId + '_day' + dayNum + '_' + sessionCode + '.png');
 
-  // Keep the signature inside its cell's visual boundaries.
   participantSheet.setColumnWidth(signatureColumn, 110);
   participantSheet.setRowHeight(participantRow, Math.max(participantSheet.getRowHeight(participantRow), 55));
-  signatureCell.setNote('Attendance: ' + payload.status + '\nSession: ' + sessionLabel + '\nSubmitted: ' + timeStampText);
+  signatureCell.setNote('Attendance: ' + payload.status + '\\nSession: ' + sessionLabel + '\\nSubmitted: ' + timeStampText);
 
-  // Replace any existing over-grid signature anchored to this cell.
   participantSheet.getImages().forEach(image => {
     const anchor = image.getAnchorCell();
     if (anchor.getRow() === participantRow && anchor.getColumn() === signatureColumn) image.remove();
@@ -308,7 +295,6 @@ function submitAttendance(payload) {
   const insertedImage = participantSheet.insertImage(blob, signatureColumn, participantRow);
   insertedImage.setWidth(100).setHeight(45).setAnchorCell(signatureCell);
 
-  // Keep a row-per-session audit log with the exact timestamp.
   const data = log.getDataRange().getValues();
   let existingRow = -1;
   for (let i = 1; i < data.length; i++) {
@@ -328,8 +314,7 @@ function submitAttendance(payload) {
   if (existingRow > 0) log.getRange(existingRow, 1, 1, row.length).setValues([row]);
   else log.appendRow(row);
 
-  // Also write an auditable status/time note to the session cell; the signature image remains within D:M.
-  signatureCell.setNote('Attendance: ' + payload.status + '\nSession: ' + sessionLabel + '\nSubmitted: ' + timeStampText);
+  signatureCell.setNote('Attendance: ' + payload.status + '\\nSession: ' + sessionLabel + '\\nSubmitted: ' + timeStampText);
 
   return {
     success: true,
