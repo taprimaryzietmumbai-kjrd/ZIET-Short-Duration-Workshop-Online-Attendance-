@@ -144,13 +144,7 @@ canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=canvasPoint
 canvas.addEventListener('pointerup',()=>{drawing=false;});
 canvas.addEventListener('pointercancel',()=>{drawing=false;});
 document.getElementById('clearSignature').addEventListener('click',resetCanvas);
-document.getElementById('signatureUpload').addEventListener('change',e=>{
- const file=e.target.files&&e.target.files[0];if(!file)return;
- if(!/^image\/(png|jpeg)$/.test(file.type)){show(message,'Upload a PNG or JPEG signature image.','err');e.target.value='';return;}
- if(file.size>1500000){show(message,'Please upload a signature image under 1.5 MB.','err');e.target.value='';return;}
- const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{resetCanvas();const scale=Math.min((canvas.width-40)/img.width,(canvas.height-40)/img.height);const w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);signatureHasInk=true;uploadedSignatureData='';document.getElementById('signatureStatus').textContent='Uploaded signature loaded into the signing box.';};img.src=reader.result;};reader.readAsDataURL(file);
-});
-function signatureData(){if(uploadedSignatureData)return uploadedSignatureData;if(!signatureHasInk)return '';return canvas.toDataURL('image/png');}
+function signatureData(){if(!signatureHasInk)return '';return canvas.toDataURL('image/png');}
 
 document.getElementById('submit').addEventListener('click',()=>{
  if(!batch.value||!participant.value){show(message,'Please select your participant list and your name.','err');return}
