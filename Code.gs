@@ -24,27 +24,80 @@ function getParticipants(sheetName) {
   if (!sh || [LOG_SHEET, SETTINGS_SHEET].includes(sheetName)) {
     throw new Error('The selected participant sheet was not found.');
   }
+
   const values = sh.getDataRange().getDisplayValues();
-  if (values.length < 2) return [];
-  const headers = values[0].map(v => String(v).trim().toLowerCase());
-  const nameIndex = findHeader_(headers, ['participant name','name of participant','teacher name','name','participant']);
-  const schoolIndex = findHeader_(headers, ['school','school name','kv name','name of kv','kendriya vidyalaya','vidyalaya']);
-  if (nameIndex < 0) throw new Error('Could not identify the participant-name column in row 1 of "' + sheetName + '".');
-  return values.slice(1).map((row, i) => ({
-    id: String(i + 2),
+  if (!values.length) return [];
+
+  // Some participant sheets have a title or merged heading above the column headers.
+  // Scan the first 10 rows and use the row that best identifies participant names.
+  let headerRowIndex = -1;
+  let nameIndex = -1;
+  let schoolIndex = -1;
+  let bestScore = -1;
+  const nameHeaders = [
+    'participant name', 'name of participant', 'name of the participant',
+    'teacher name', 'name of teacher', 'name of the teacher',
+    'teacher', 'participant', 'name', 'full name', 'employee name',
+    'name of employee', 'staff name', 'teacher\'s name',
+    'प्रशिक्षार्थी का नाम', 'प्रतिभागी का नाम', 'शिक्षक का नाम', 'नाम'
+  ];
+  const schoolHeaders = [
+    'school', 'school name', 'name of school', 'name of the school',
+    'kv name', 'name of kv', 'name of the kv', 'kendriya vidyalaya',
+    'vidyalaya', 'विद्यालय', 'विद्यालय का नाम', 'केन्द्रीय विद्यालय'
+  ];
+
+  const scanLimit = Math.min(values.length, 10);
+  for (let r = 0; r < scanLimit; r++) {
+    const headers = values[r].map(v => normalizeHeader_(v));
+    const n = findHeader_(headers, nameHeaders);
+    const s = findHeader_(headers, schoolHeaders);
+    let score = n >= 0 ? 10 : 0;
+    if (s >= 0) score += 3;
+    if (n >= 0 && headers.filter(Boolean).length >= 2) score += 1;
+    if (score > bestScore) {
+      bestScore = score;
+      headerRowIndex = r;
+      nameIndex = n;
+      schoolIndex = s;
+    }
+  }
+
+  if (nameIndex < 0) {
+    const preview = values.slice(0, Math.min(values.length, 5))
+      .map((row, i) => 'Row ' + (i + 1) + ': ' + row.filter(String).join(' | '))
+      .join(' ; ');
+    throw new Error('Could not identify the participant-name column in the first 10 rows of "' +
+      sheetName + '". Check the header row. Sample: ' + preview);
+  }
+
+  return values.slice(headerRowIndex + 1).map((row, offset) => ({
+    // Actual row number in the sheet, used as a stable participant row identifier.
+    id: String(headerRowIndex + offset + 2),
     name: String(row[nameIndex] || '').trim(),
     school: schoolIndex >= 0 ? String(row[schoolIndex] || '').trim() : ''
   })).filter(p => p.name);
 }
 
+function normalizeHeader_(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[：:]/g, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\\s+/g, ' ')
+    .trim();
+}
+
 function findHeader_(headers, candidates) {
+  const normalizedCandidates = candidates.map(normalizeHeader_);
   for (let i = 0; i < headers.length; i++) {
-    const h = headers[i].replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
-    if (candidates.includes(h)) return i;
+    const h = normalizeHeader_(headers[i]);
+    if (normalizedCandidates.includes(h)) return i;
   }
+  // Allow variants such as "Name of the Teacher (as per KVS records)".
   for (let i = 0; i < headers.length; i++) {
-    const h = headers[i].replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
-    if (candidates.some(c => h.includes(c))) return i;
+    const h = normalizeHeader_(headers[i]);
+    if (h && normalizedCandidates.some(c => c.length >= 4 && (h.includes(c) || c.includes(h)))) return i;
   }
   return -1;
 }
