@@ -235,7 +235,8 @@ function submitAttendance(payload) {
       !payload.dayNumber || !payload.sessionCode || !['Present', 'Absent'].includes(payload.status)) {
     throw new Error('Select your participant, attendance status, and session.');
   }
-  if (!payload.signatureDataUrl || !/^data:image\/(png|jpeg|jpg);base64,/.test(payload.signatureDataUrl)) {
+  const signatureText = String(payload.signatureDataUrl || '');
+  if (!['data:image/png;base64,', 'data:image/jpeg;base64,', 'data:image/jpg;base64,'].some(prefix => signatureText.startsWith(prefix))) {
     throw new Error('Please draw or upload your signature before submitting attendance.');
   }
   const dayNum = Number(payload.dayNumber);
@@ -294,11 +295,13 @@ function submitAttendance(payload) {
   const signatureCellA1 = signatureCell.getA1Notation();
 
   const dataUrlParts = payload.signatureDataUrl.split(',');
-  const mime = dataUrlParts[0].match(/^data:(image\/(?:png|jpeg|jpg));base64$/i);
-  if (!mime || !dataUrlParts[1]) throw new Error('The signature image could not be read.');
+  const mimeHeader = String(dataUrlParts[0] || '').toLowerCase();
+  const mimeType = ['data:image/png;base64', 'data:image/jpeg;base64', 'data:image/jpg;base64'].includes(mimeHeader)
+    ? mimeHeader.slice(5, mimeHeader.indexOf(';')) : '';
+  if (!mimeType || !dataUrlParts[1]) throw new Error('The signature image could not be read.');
   const imageBytes = Utilities.base64Decode(dataUrlParts[1]);
   if (imageBytes.length > 1500000) throw new Error('Please use a smaller signature image (under 1.5 MB).');
-  const blob = Utilities.newBlob(imageBytes, mime[1].toLowerCase().replace('image/jpg','image/jpeg'),
+  const blob = Utilities.newBlob(imageBytes, mimeType.replace('image/jpg','image/jpeg'),
     'signature_' + payload.participantId + '_day' + dayNum + '_' + sessionCode + '.png');
 
   participantSheet.setColumnWidth(signatureColumn, 110);
