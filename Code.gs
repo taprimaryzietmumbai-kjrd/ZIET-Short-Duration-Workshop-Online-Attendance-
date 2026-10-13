@@ -219,8 +219,8 @@ function getAttendanceSettings_() {
     const dayA = Number((a.day.match(/\d+/) || [0])[0]);
     const dayB = Number((b.day.match(/\d+/) || [0])[0]);
     if (dayA !== dayB) return dayA - dayB;
-    const codeA = /afternoon|अपराह्न|\\bAN\\b/i.test(a.session) ? 1 : 0;
-    const codeB = /afternoon|अपराह्न|\\bAN\\b/i.test(b.session) ? 1 : 0;
+    const codeA = /afternoon|अपराह्न|\bAN\b/i.test(a.session) ? 1 : 0;
+    const codeB = /afternoon|अपराह्न|\bAN\b/i.test(b.session) ? 1 : 0;
     return codeA - codeB;
   });
   if (settings.length === 0) throw new Error('No timetable session rows were found in worksheet "' + sh.getName() + '".');
