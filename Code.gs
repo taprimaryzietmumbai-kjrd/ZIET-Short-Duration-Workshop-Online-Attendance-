@@ -134,6 +134,10 @@ function getAttendanceSettings_() {
       sh.getRange(1, 1, 11, 5).setValues([headers].concat(rows));
     }
   }
+  // Keep the attendance application aligned with the organiser's approved timetable.
+  // Dates are ISO (yyyy-MM-dd); times are 24-hour local India time.
+  sh.getRange(2, 1, 10, 5).setValues(makeDefaultSettingsRows_());
+
   const range = sh.getRange(2, 1, 10, 5);
   const rawRows = range.getValues();
   const displayRows = range.getDisplayValues();
@@ -185,10 +189,18 @@ function normalizeTime_(rawValue, displayedValue) {
 }
 
 function makeDefaultSettingsRows_() {
+  const schedule = [
+    ['2026-10-12', '2026-10-12'],
+    ['2026-10-13', '2026-10-13'],
+    ['2026-10-14', '2026-10-14'],
+    ['2026-10-15', '2026-10-15'],
+    ['2026-10-16', '2026-10-16']
+  ];
   const rows = [];
   for (let day = 1; day <= 5; day++) {
-    rows.push(['Day ' + day, 'Forenoon (पूर्वाह्न)', '', '09:00', '12:30']);
-    rows.push(['Day ' + day, 'Afternoon (अपराह्न)', '', '13:00', '17:00']);
+    const date = schedule[day - 1][0];
+    rows.push(['Day ' + day, 'Forenoon (पूर्वाह्न)', date, '09:00', '11:30']);
+    rows.push(['Day ' + day, 'Afternoon (अपराह्न)', date, '14:00', '17:30']);
   }
   return rows;
 }
@@ -247,6 +259,11 @@ function submitAttendance(payload) {
 
   if (!setting || !setting.date) throw new Error('The date for Day ' + dayNum + ' ' + sessionLabel + ' is not configured.');
   if (today !== setting.date) throw new Error('This session is configured for ' + setting.date + ', not today.');
+  const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
+  if (currentTime < setting.open || currentTime > setting.close) {
+    throw new Error('Attendance is accepted only between ' + setting.open + ' and ' + setting.close +
+      ' IST for Day ' + dayNum + ' ' + sessionLabel + '. Current time: ' + currentTime + ' IST.');
+  }
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let log = ss.getSheetByName(LOG_SHEET);
