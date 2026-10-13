@@ -11,11 +11,17 @@ function doGet() {
 
 function getInitialData() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const timetableSheet = findTimetableSheet_(ss);
   const excluded = [LOG_SHEET, SETTINGS_SHEET];
+  if (timetableSheet) excluded.push(timetableSheet.getName());
   const tabs = ss.getSheets()
     .map(s => s.getName())
     .filter(n => !excluded.includes(n));
-  return { spreadsheetName: ss.getName(), tabs: tabs, settings: getAttendanceSettings_() };
+  return {
+    spreadsheetName: ss.getName(),
+    tabs: tabs,
+    settings: getAttendanceSettings_()
+  };
 }
 
 function getParticipants(sheetName) {
@@ -99,55 +105,120 @@ function findHeader_(headers, candidates) {
   return -1;
 }
 
+function findTimetableSheet_(ss) {
+  const excluded = [LOG_SHEET];
+  return ss.getSheets().find(sh => {
+    if (excluded.includes(sh.getName())) return false;
+    const lastRow = Math.min(Math.max(sh.getLastRow(), 1), 10);
+    const lastCol = Math.min(Math.max(sh.getLastColumn(), 1), 10);
+    const rows = sh.getRange(1, 1, lastRow, lastCol).getDisplayValues();
+    return rows.some(row => {
+      const headers = row.map(normalizeHeader_);
+      const hasDay = headers.some(h => h === 'day' || /^day label$/.test(h));
+      const hasSession = headers.some(h => h === 'session');
+      const hasDate = headers.some(h => h.indexOf('date') >= 0);
+      const hasOpen = headers.some(h => h.indexOf('opening time') >= 0 || h === 'open' || h === 'opening');
+      const hasClose = headers.some(h => h.indexOf('closing time') >= 0 || h === 'close' || h === 'closing');
+      return hasDay && hasSession && hasDate && hasOpen && hasClose;
+    });
+  }) || null;
+}
+
 function getAttendanceSettings_() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sh = ss.getSheetByName(SETTINGS_SHEET);
-  const headers = ['Day', 'Session', 'Date (YYYY-MM-DD)', 'Opening time (HH:MM)', 'Closing time (HH:MM)'];
-  if (!sh) {
-    sh = ss.insertSheet(SETTINGS_SHEET);
-    sh.getRange(1, 1, 11, 5).setValues([headers].concat(makeDefaultSettingsRows_()));
-    sh.setFrozenRows(1);
-  } else {
-    const firstRow = sh.getRange(1, 1, 1, Math.max(5, sh.getLastColumn())).getDisplayValues()[0]
-      .map(v => String(v).trim().toLowerCase());
-    if (firstRow.indexOf('session') === -1 || firstRow.indexOf('date (yyyy-mm-dd)') === -1) {
-      const oldRows = sh.getLastRow() > 1
-        ? sh.getRange(2, 1, Math.min(5, sh.getLastRow() - 1), Math.min(4, sh.getLastColumn())).getDisplayValues()
-        : [];
-      const oldByDay = {};
-      oldRows.forEach((r, i) => { oldByDay[i + 1] = r; });
-      const newRows = makeDefaultSettingsRows_().map((r, i) => {
-        const day = Math.floor(i / 2) + 1;
-        const old = oldByDay[day] || [];
-        return [r[0], r[1], old[1] || '', old[2] || '09:00', old[3] || '17:00'];
-      });
-      sh.clearContents();
-      sh.getRange(1, 1, 11, 5).setValues([headers].concat(newRows));
-      sh.setFrozenRows(1);
-    } else if (sh.getLastRow() < 11) {
-      const existing = sh.getLastRow() > 1
-        ? sh.getRange(2, 1, sh.getLastRow() - 1, 5).getDisplayValues() : [];
-      const defaults = makeDefaultSettingsRows_();
-      const byKey = {};
-      existing.forEach(r => byKey[String(r[0]) + '|' + String(r[1])] = r);
-      const rows = defaults.map(r => byKey[r[0] + '|' + r[1]] || r);
-      sh.getRange(1, 1, 11, 5).setValues([headers].concat(rows));
+  let sh = findTimetableSheet_(ss);
+  let headerRow = -1;
+  let headerMap = null;
+
+  if (sh) {
+    const rowsToScan = Math.min(sh.getLastRow(), 10);
+    const colsToScan = Math.min(Math.max(sh.getLastColumn(), 1), 10);
+    const rows = sh.getRange(1, 1, Math.max(rowsToScan, 1), colsToScan).getDisplayValues();
+    for (let r = 0; r < rows.length; r++) {
+      const headers = rows[r].map(normalizeHeader_);
+      const map = {
+        day: headers.findIndex(h => h === 'day' || h === 'day label'),
+        session: headers.findIndex(h => h === 'session'),
+        date: headers.findIndex(h => h.indexOf('date') >= 0),
+        open: headers.findIndex(h => h.indexOf('opening time') >= 0 || h === 'open' || h === 'opening'),
+        close: headers.findIndex(h => h.indexOf('closing time') >= 0 || h === 'close' || h === 'closing')
+      };
+      if (Object.values(map).every(i => i >= 0)) {
+        headerRow = r + 1;
+        headerMap = map;
+        break;
+      }
     }
   }
-  // Keep the attendance application aligned with the organiser's approved timetable.
-  // Dates are ISO (yyyy-MM-dd); times are 24-hour local India time.
-  sh.getRange(2, 1, 10, 5).setValues(makeDefaultSettingsRows_());
 
-  const range = sh.getRange(2, 1, 10, 5);
-  const rawRows = range.getValues();
-  const displayRows = range.getDisplayValues();
-  return rawRows.map((r, i) => ({
-    day: String(displayRows[i][0] || r[0] || ('Day ' + (Math.floor(i / 2) + 1))).trim(),
-    session: String(displayRows[i][1] || r[1] || (i % 2 === 0 ? 'Forenoon' : 'Afternoon')).trim(),
-    date: normalizeWorkshopDate_(r[2], displayRows[i][2]),
-    open: normalizeTime_(r[3], displayRows[i][3]) || (i % 2 === 0 ? '09:00' : '13:00'),
-    close: normalizeTime_(r[4], displayRows[i][4]) || (i % 2 === 0 ? '12:30' : '17:00')
-  }));
+  // Compatibility fallback: use an existing Attendance_Settings tab, but never
+  // overwrite it with hard-coded dates or times.
+  if (!sh) {
+    sh = ss.getSheetByName(SETTINGS_SHEET);
+    if (sh) {
+      const rowsToScan = Math.min(sh.getLastRow(), 10);
+      const colsToScan = Math.min(Math.max(sh.getLastColumn(), 1), 10);
+      const rows = sh.getRange(1, 1, Math.max(rowsToScan, 1), colsToScan).getDisplayValues();
+      for (let r = 0; r < rows.length; r++) {
+        const headers = rows[r].map(normalizeHeader_);
+        const map = {
+          day: headers.findIndex(h => h === 'day' || h === 'day label'),
+          session: headers.findIndex(h => h === 'session'),
+          date: headers.findIndex(h => h.indexOf('date') >= 0),
+          open: headers.findIndex(h => h.indexOf('opening time') >= 0 || h === 'open' || h === 'opening'),
+          close: headers.findIndex(h => h.indexOf('closing time') >= 0 || h === 'close' || h === 'closing')
+        };
+        if (Object.values(map).every(i => i >= 0)) {
+          headerRow = r + 1;
+          headerMap = map;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!sh || headerRow < 1 || !headerMap) {
+    throw new Error('Timetable not found. In the connected spreadsheet, provide a worksheet with columns Day, Session, Date, Opening time, and Closing time.');
+  }
+
+  const lastRow = sh.getLastRow();
+  if (lastRow <= headerRow) {
+    throw new Error('The timetable worksheet has headers but no session rows.');
+  }
+  const rawRows = sh.getRange(headerRow + 1, 1, lastRow - headerRow, sh.getLastColumn()).getValues();
+  const displayRows = sh.getRange(headerRow + 1, 1, lastRow - headerRow, sh.getLastColumn()).getDisplayValues();
+
+  const settings = [];
+  rawRows.forEach((row, i) => {
+    const display = displayRows[i];
+    const dayText = String(display[headerMap.day] || row[headerMap.day] || '').trim();
+    const sessionText = String(display[headerMap.session] || row[headerMap.session] || '').trim();
+    const dateValue = normalizeWorkshopDate_(row[headerMap.date], display[headerMap.date]);
+    const openValue = normalizeTime_(row[headerMap.open], display[headerMap.open]);
+    const closeValue = normalizeTime_(row[headerMap.close], display[headerMap.close]);
+    if (!dayText && !sessionText && !dateValue && !openValue && !closeValue) return;
+    if (!dayText || !sessionText || !dateValue || !openValue || !closeValue) {
+      throw new Error('Incomplete timetable row ' + (headerRow + i + 1) + ' in worksheet "' + sh.getName() + '". Fill Day, Session, Date, Opening time, and Closing time.');
+    }
+    settings.push({
+      day: dayText,
+      session: sessionText,
+      date: dateValue,
+      open: openValue,
+      close: closeValue
+    });
+  });
+
+  settings.sort((a, b) => {
+    const dayA = Number((a.day.match(/\\d+/) || [0])[0]);
+    const dayB = Number((b.day.match(/\\d+/) || [0])[0]);
+    if (dayA !== dayB) return dayA - dayB;
+    const codeA = /afternoon|अपराह्न|\\bAN\\b/i.test(a.session) ? 1 : 0;
+    const codeB = /afternoon|अपराह्न|\\bAN\\b/i.test(b.session) ? 1 : 0;
+    return codeA - codeB;
+  });
+  if (settings.length === 0) throw new Error('No timetable session rows were found in worksheet "' + sh.getName() + '".');
+  return settings;
 }
 
 function normalizeWorkshopDate_(rawValue, displayedValue) {
