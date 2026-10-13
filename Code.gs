@@ -106,22 +106,28 @@ function findHeader_(headers, candidates) {
 }
 
 function findTimetableSheet_(ss) {
-  const excluded = [LOG_SHEET];
-  return ss.getSheets().find(sh => {
-    if (excluded.includes(sh.getName())) return false;
+  function hasTimetableHeaders(sh) {
     const lastRow = Math.min(Math.max(sh.getLastRow(), 1), 10);
     const lastCol = Math.min(Math.max(sh.getLastColumn(), 1), 10);
     const rows = sh.getRange(1, 1, lastRow, lastCol).getDisplayValues();
     return rows.some(row => {
       const headers = row.map(normalizeHeader_);
-      const hasDay = headers.some(h => h === 'day' || /^day label$/.test(h));
+      const hasDay = headers.some(h => h === 'day' || h === 'day label');
       const hasSession = headers.some(h => h === 'session');
       const hasDate = headers.some(h => h.indexOf('date') >= 0);
       const hasOpen = headers.some(h => h.indexOf('opening time') >= 0 || h === 'open' || h === 'opening');
       const hasClose = headers.some(h => h.indexOf('closing time') >= 0 || h === 'close' || h === 'closing');
       return hasDay && hasSession && hasDate && hasOpen && hasClose;
     });
-  }) || null;
+  }
+  // Prefer the organizer's timetable tab over the legacy settings tab.
+  const candidates = ss.getSheets().filter(sh =>
+    ![LOG_SHEET, SETTINGS_SHEET].includes(sh.getName())
+  );
+  const source = candidates.find(hasTimetableHeaders);
+  if (source) return source;
+  const legacySettings = ss.getSheetByName(SETTINGS_SHEET);
+  return legacySettings && hasTimetableHeaders(legacySettings) ? legacySettings : null;
 }
 
 function getAttendanceSettings_() {
