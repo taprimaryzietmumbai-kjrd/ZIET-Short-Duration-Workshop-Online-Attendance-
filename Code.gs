@@ -82,7 +82,7 @@ function normalizeHeader_(value) {
     .toLowerCase()
     .replace(/[：:]/g, '')
     .replace(/[_-]+/g, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -156,16 +156,16 @@ function normalizeWorkshopDate_(rawValue, displayedValue) {
   }
   const s = String(displayedValue || rawValue || '').trim();
   if (!s) return '';
-  let m = s.match(/^(\\d{1,2})[.\\/-](\\d{1,2})[.\\/-](\\d{4})$/);
+  let m = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
   if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
-  m = s.match(/^(\\d{4})[.\\/-](\\d{1,2})[.\\/-](\\d{1,2})$/);
+  m = s.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
   if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
   return s;
 }
 
 function normalizeTime_(rawValue, displayedValue) {
   const s = String(displayedValue || '').trim();
-  const m = s.match(/^(\\d{1,2}):(\\d{2})(?::(\\d{2}))?\\s*(AM|PM)?$/i);
+  const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
   if (m) {
     let hour = Number(m[1]), minute = Number(m[2]);
     const ap = (m[4] || '').toUpperCase();
@@ -177,7 +177,7 @@ function normalizeTime_(rawValue, displayedValue) {
     return Utilities.formatDate(rawValue, 'Asia/Kolkata', 'HH:mm');
   }
   const fallback = String(rawValue || '').trim();
-  const mf = fallback.match(/^(\\d{1,2}):(\\d{2})(?::(\\d{2}))?\\s*(AM|PM)?$/i);
+  const mf = fallback.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
   if (mf) {
     let hour = Number(mf[1]), minute = Number(mf[2]);
     const ap = (mf[4] || '').toUpperCase();
@@ -235,7 +235,7 @@ function submitAttendance(payload) {
       !payload.dayNumber || !payload.sessionCode || !['Present', 'Absent'].includes(payload.status)) {
     throw new Error('Select your participant, attendance status, and session.');
   }
-  if (!payload.signatureDataUrl || !/^data:image\\/(png|jpeg|jpg);base64,/.test(payload.signatureDataUrl)) {
+  if (!payload.signatureDataUrl || !/^data:image\/(png|jpeg|jpg);base64,/.test(payload.signatureDataUrl)) {
     throw new Error('Please draw or upload your signature before submitting attendance.');
   }
   const dayNum = Number(payload.dayNumber);
@@ -294,7 +294,7 @@ function submitAttendance(payload) {
   const signatureCellA1 = signatureCell.getA1Notation();
 
   const dataUrlParts = payload.signatureDataUrl.split(',');
-  const mime = dataUrlParts[0].match(/^data:(image\\/(?:png|jpeg|jpg));base64$/i);
+  const mime = dataUrlParts[0].match(/^data:(image\/(?:png|jpeg|jpg));base64$/i);
   if (!mime || !dataUrlParts[1]) throw new Error('The signature image could not be read.');
   const imageBytes = Utilities.base64Decode(dataUrlParts[1]);
   if (imageBytes.length > 1500000) throw new Error('Please use a smaller signature image (under 1.5 MB).');
