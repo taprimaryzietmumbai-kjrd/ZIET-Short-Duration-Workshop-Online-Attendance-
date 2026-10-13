@@ -216,8 +216,8 @@ function getAttendanceSettings_() {
   });
 
   settings.sort((a, b) => {
-    const dayA = Number((a.day.match(/\\d+/) || [0])[0]);
-    const dayB = Number((b.day.match(/\\d+/) || [0])[0]);
+    const dayA = Number((a.day.match(/\d+/) || [0])[0]);
+    const dayB = Number((b.day.match(/\d+/) || [0])[0]);
     if (dayA !== dayB) return dayA - dayB;
     const codeA = /afternoon|अपराह्न|\\bAN\\b/i.test(a.session) ? 1 : 0;
     const codeB = /afternoon|अपराह्न|\\bAN\\b/i.test(b.session) ? 1 : 0;
