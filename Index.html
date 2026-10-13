@@ -137,7 +137,7 @@ document.getElementById('reset').addEventListener('click',()=>{chooseStatus('');
 
 const canvas=document.getElementById('signatureCanvas'),ctx=canvas.getContext('2d');
 let drawing=false,signatureHasInk=false;
-function resetCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#102a43';signatureHasInk=false;document.getElementById('signatureStatus').textContent='No signature added yet.';}
+function resetCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.lineWidth=9;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#102a43';signatureHasInk=false;document.getElementById('signatureStatus').textContent='No signature added yet.';}
 function canvasPoint(event){const rect=canvas.getBoundingClientRect();return {x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};}
 canvas.addEventListener('pointerdown',e=>{drawing=true;canvas.setPointerCapture(e.pointerId);const p=canvasPoint(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+0.1,p.y+0.1);ctx.stroke();signatureHasInk=true;document.getElementById('signatureStatus').textContent='Signature drawn.';});
 canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=canvasPoint(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
