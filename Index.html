@@ -263,7 +263,7 @@ function buildOfflineTable(){
  let top='<tr><th rowspan="2">S. No.</th><th rowspan="2">Name (English)</th><th rowspan="2">नाम (हिंदी)</th><th rowspan="2">School Name / विद्यालय का नाम</th>';
  days.forEach(d=>top+='<th colspan="2">'+escapeOffline(d.day)+'<br>'+escapeOffline(formatOfflineDate(d.date))+'</th>');
  top+='</tr><tr>';
- days.forEach(()=>top+='<th>F.N.<br>Signature</th><th>A.N.<br>Signature</th>');
+ days.forEach(()=>top+='<th>F.N. / पूर्वाह्न<br>Signature / हस्ताक्षर</th><th>A.N. / अपराह्न<br>Signature / हस्ताक्षर</th>');
  top+='</tr>';
  document.getElementById('offlineHead').innerHTML=top;
  const rows=offlinePeople.map((p,i)=>{
