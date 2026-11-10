@@ -48,11 +48,12 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
  body.offline-print #offlinePreview{min-width:0;width:100%;font-size:7px;table-layout:fixed}
  body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:3px 2px;border:1px solid #222;height:31px;vertical-align:middle;overflow-wrap:anywhere}
  body.offline-print #offlinePreview th{background:#e8e8e8!important;color:#000!important}
- body.offline-print #offlinePreview th:nth-child(1){width:3.5%}
- body.offline-print #offlinePreview th:nth-child(2){width:15%}
- body.offline-print #offlinePreview th:nth-child(3){width:15%}
- body.offline-print #offlinePreview th:nth-child(4){width:18%}
- body.offline-print #offlinePreview th:nth-child(n+5){width:4.85%}
+ /* Wider signature cells; identity columns are intentionally narrower. */
+ body.offline-print #offlinePreview th:nth-child(1){width:3%}
+ body.offline-print #offlinePreview th:nth-child(2){width:10%}
+ body.offline-print #offlinePreview th:nth-child(3){width:10%}
+ body.offline-print #offlinePreview th:nth-child(4){width:13%}
+ body.offline-print #offlinePreview th:nth-child(n+5){width:6.4%}
  body.offline-print #offlinePreview thead{display:table-header-group}
  body.offline-print #offlinePreview tr{break-inside:avoid}
 }
