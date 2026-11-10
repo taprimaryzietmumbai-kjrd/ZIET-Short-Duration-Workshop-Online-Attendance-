@@ -53,11 +53,10 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
  body.offline-print .card{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;border:0;box-shadow:none;margin:0!important;padding:0!important}
  body.offline-print .offline-table-wrap{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;overflow:visible!important;border:0;margin:4px 0 0!important}
  body.offline-print .offline-print-heading{display:block;text-align:center;margin:0 0 6px}
- body.offline-print #offlinePreview{display:table!important;min-width:0!important;width:100%!important;max-width:none!important;font-size:8px;table-layout:fixed}
- body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:4px 3px;border:1px solid #222;height:34px;vertical-align:middle;overflow-wrap:anywhere}
+ body.offline-print #offlinePreview{display:table!important;width:287mm!important;min-width:287mm!important;max-width:none!important;font-size:8px;table-layout:fixed!important}
+ body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:4px 3px;border:1px solid #222;height:34px;vertical-align:middle;overflow-wrap:anywhere;box-sizing:border-box}
  body.offline-print #offlinePreview th{background:#e8e8e8!important;color:#000!important}
- /* Explicit column sizing: make the bilingual school heading unmistakable and readable. */
- body.offline-print #offlinePreview{width:100%!important;min-width:100%!important;table-layout:fixed!important}
+ /* Fixed A4-landscape printable width: 297mm page minus 5mm margins on both sides. */
  body.offline-print #offlinePreview th:nth-child(1),body.offline-print #offlinePreview td:nth-child(1){width:4%!important}
  body.offline-print #offlinePreview th:nth-child(2),body.offline-print #offlinePreview td:nth-child(2){width:15%!important}
  body.offline-print #offlinePreview th:nth-child(3),body.offline-print #offlinePreview td:nth-child(3){width:19%!important}
