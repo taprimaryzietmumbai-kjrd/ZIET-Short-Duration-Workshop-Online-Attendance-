@@ -461,7 +461,7 @@ function getOfflineRegisterData(sheetName) {
   const hindiSchoolHeaders = [
     'विद्यालय का नाम हिंदी में','विद्यालय का नाम हिन्दी में','विद्यालय का नाम (हिंदी)',
     'विद्यालय का नाम (हिन्दी)','हिंदी में विद्यालय का नाम','हिन्दी में विद्यालय का नाम',
-    'school name in hindi','school name in hindi language','hindi school name','school name (hindi)','school hindi','name of school in hindi','विद्यालय (हिंदी)','विद्यालय (हिन्दी)'
+    'school name in hindi','school name in hindi language','hindi school name','school name (hindi)','school hindi','name of school in hindi','विद्यालय (हिंदी)','विद्यालय (हिन्दी)','विद्यालय'
   ];
 
   let headerRowIndex=-1, englishNameIndex=-1, hindiNameIndex=-1;
