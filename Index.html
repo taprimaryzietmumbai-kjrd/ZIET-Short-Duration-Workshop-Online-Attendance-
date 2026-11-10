@@ -50,16 +50,17 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
  body.offline-print #offlineMode{display:block!important}
  body.offline-print main{width:auto;margin:0}
  body.offline-print .card{border:0;box-shadow:none;margin:0;padding:0}
- body.offline-print .offline-table-wrap{overflow:visible;border:0;margin-top:4px}
+ body.offline-print .offline-table-wrap{display:block!important;width:100%!important;max-width:none!important;overflow:visible!important;border:0;margin-top:4px}
  body.offline-print .offline-print-heading{display:block;text-align:center;margin:0 0 6px}
- body.offline-print #offlinePreview{min-width:0;width:100%;font-size:7px;table-layout:fixed}
- body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:3px 2px;border:1px solid #222;height:31px;vertical-align:middle;overflow-wrap:anywhere}
+ body.offline-print #offlinePreview{display:table!important;min-width:0!important;width:100%!important;max-width:none!important;font-size:8px;table-layout:fixed}
+ body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:4px 3px;border:1px solid #222;height:34px;vertical-align:middle;overflow-wrap:anywhere}
  body.offline-print #offlinePreview th{background:#e8e8e8!important;color:#000!important}
- /* Three identity columns followed by ten evenly sized signature columns. */
+ /* Use the full printable width: narrow identity fields, generous signature cells. */
  body.offline-print #offlinePreview th:nth-child(1){width:4%}
  body.offline-print #offlinePreview th:nth-child(2){width:13%}
  body.offline-print #offlinePreview th:nth-child(3){width:15%}
  body.offline-print #offlinePreview th:nth-child(n+4){width:6.8%}
+ body.offline-print #offlinePreview td:nth-child(2),body.offline-print #offlinePreview td:nth-child(3){text-align:left}
  body.offline-print #offlinePreview thead{display:table-header-group}
  body.offline-print #offlinePreview tr{break-inside:avoid}
  body.offline-print #offlinePreview tfoot{display:table-footer-group}
