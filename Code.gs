@@ -441,7 +441,7 @@ function getOfflineRegisterData(sheetName) {
   ];
   const hindiNameHeaders = [
     'नाम','प्रतिभागी का नाम','प्रशिक्षार्थी का नाम','शिक्षक का नाम',
-    'हिंदी में नाम','हिन्दी में नाम','नाम हिंदी में','नाम हिन्दी में','hindi name','name in hindi'
+    'हिंदी में नाम','हिन्दी में नाम','नाम हिंदी में','नाम हिन्दी में','hindi name','name in hindi','name (hindi)','name hindi','participant name hindi','participant name (hindi)','participant name in hindi'
   ];
   const englishSchoolHeaders = [
     'school','school name','name of school','name of the school','kv name',
@@ -450,7 +450,7 @@ function getOfflineRegisterData(sheetName) {
   const hindiSchoolHeaders = [
     'विद्यालय का नाम हिंदी में','विद्यालय का नाम हिन्दी में','विद्यालय का नाम (हिंदी)',
     'विद्यालय का नाम (हिन्दी)','हिंदी में विद्यालय का नाम','हिन्दी में विद्यालय का नाम',
-    'school name in hindi','school name in hindi language','hindi school name'
+    'school name in hindi','school name in hindi language','hindi school name','school name (hindi)','school hindi','name of school in hindi','विद्यालय (हिंदी)','विद्यालय (हिन्दी)'
   ];
 
   let headerRowIndex=-1, englishNameIndex=-1, hindiNameIndex=-1;
