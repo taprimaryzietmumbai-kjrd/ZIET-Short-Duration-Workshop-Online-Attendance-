@@ -43,14 +43,15 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
 #offlinePreview th{background:#eaf2ff;color:#124b86}
 .offline-print-heading{display:none}
 @media print{
- @page{size:A4 landscape;margin:7mm}
+ @page{size:A4 landscape;margin:5mm}
  body.offline-print{background:#fff}
  body.offline-print header,body.offline-print footer,body.offline-print #onlineMode,body.offline-print .mode-tabs,
  body.offline-print .offline-controls{display:none!important}
- body.offline-print #offlineMode{display:block!important}
- body.offline-print main{width:auto;margin:0}
- body.offline-print .card{border:0;box-shadow:none;margin:0;padding:0}
- body.offline-print .offline-table-wrap{display:block!important;width:100%!important;max-width:none!important;overflow:visible!important;border:0;margin-top:4px}
+ body.offline-print,body.offline-print html{width:100%!important;margin:0!important;padding:0!important}
+ body.offline-print #offlineMode{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+ body.offline-print main{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important}
+ body.offline-print .card{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;border:0;box-shadow:none;margin:0!important;padding:0!important}
+ body.offline-print .offline-table-wrap{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;overflow:visible!important;border:0;margin:4px 0 0!important}
  body.offline-print .offline-print-heading{display:block;text-align:center;margin:0 0 6px}
  body.offline-print #offlinePreview{display:table!important;min-width:0!important;width:100%!important;max-width:none!important;font-size:8px;table-layout:fixed}
  body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:4px 3px;border:1px solid #222;height:34px;vertical-align:middle;overflow-wrap:anywhere}
