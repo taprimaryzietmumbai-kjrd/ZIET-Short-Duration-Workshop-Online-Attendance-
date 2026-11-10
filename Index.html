@@ -23,12 +23,51 @@ button.selected{box-shadow:inset 0 0 0 2px currentColor}.person{margin-top:14px;
 .signatureHint{font-size:.88rem;color:var(--muted);margin:6px 0}
 input[type=file]{max-width:100%;font:inherit}.message{display:none;padding:12px;border-radius:8px;margin-top:14px;white-space:pre-wrap}.message.show{display:block}.ok{background:#e1f5e9;color:#116b41}.err{background:#fde8e8;color:#a52832}.info{background:#eaf3ff;color:#17477e}
 footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9rem}
+.mode-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.mode-tab{background:#e7eef8;color:var(--navy);border:1px solid var(--line);padding:12px 18px}
+.mode-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.mode-panel[hidden]{display:none!important}
+.offline-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.offline-toolbar button{flex:1}
+.offline-table-wrap{overflow:auto;margin-top:16px;border:1px solid var(--line);border-radius:9px}
+#offlinePreview{width:100%;border-collapse:collapse;min-width:900px}
+#offlinePreview th,#offlinePreview td{border:1px solid var(--line);padding:8px;text-align:center}
+#offlinePreview td:nth-child(2),#offlinePreview td:nth-child(3),#offlinePreview td:nth-child(4){text-align:left}
+#offlinePreview th{background:#eaf2ff;color:#124b86}
+.offline-print-heading{display:none}
+@media print{
+ @page{size:A4 landscape;margin:7mm}
+ body.offline-print{background:#fff}
+ body.offline-print header,body.offline-print footer,body.offline-print #onlineMode,body.offline-print .mode-tabs,
+ body.offline-print .offline-controls{display:none!important}
+ body.offline-print #offlineMode{display:block!important}
+ body.offline-print main{width:auto;margin:0}
+ body.offline-print .card{border:0;box-shadow:none;margin:0;padding:0}
+ body.offline-print .offline-table-wrap{overflow:visible;border:0;margin-top:4px}
+ body.offline-print .offline-print-heading{display:block;text-align:center;margin:0 0 6px}
+ body.offline-print #offlinePreview{min-width:0;width:100%;font-size:7px;table-layout:fixed}
+ body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:3px 2px;border:1px solid #222;height:31px;vertical-align:middle;overflow-wrap:anywhere}
+ body.offline-print #offlinePreview th{background:#e8e8e8!important;color:#000!important}
+ body.offline-print #offlinePreview th:nth-child(1){width:3.5%}
+ body.offline-print #offlinePreview th:nth-child(2){width:15%}
+ body.offline-print #offlinePreview th:nth-child(3){width:15%}
+ body.offline-print #offlinePreview th:nth-child(4){width:18%}
+ body.offline-print #offlinePreview th:nth-child(n+5){width:4.85%}
+ body.offline-print #offlinePreview thead{display:table-header-group}
+ body.offline-print #offlinePreview tr{break-inside:avoid}
+}
+
 @media(max-width:700px){.grid{grid-template-columns:1fr}.days{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}}@media(max-width:390px){.days{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header><div>KENDRIYA VIDYALAYA SANGATHAN</div><h1>Workshop Online Attendance</h1><p>Zonal Institute of Education &amp; Training, Mumbai</p><p>Five-day · Forenoon &amp; Afternoon attendance</p></header>
 <main>
+<div class="mode-tabs" role="tablist" aria-label="Attendance mode">
+ <button type="button" class="mode-tab active" id="onlineModeTab" role="tab" aria-selected="true">🌐 Online Attendance</button>
+ <button type="button" class="mode-tab" id="offlineModeTab" role="tab" aria-selected="false">📝 Offline Attendance List</button>
+</div>
+<div id="onlineMode" class="mode-panel">
 <section class="card"><h2>1. Select your participant record</h2>
 <div class="grid"><div><label for="batch">Participant list / worksheet</label><select id="batch"><option value="">Loading lists…</option></select></div>
 <div><label for="participant">Participant name and school</label><select id="participant" disabled><option value="">Select a list first</option></select></div></div>
@@ -55,7 +94,26 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
 <div id="message" class="message" role="status" aria-live="polite"></div>
 </section>
 <section class="card"><h2>Attendance policy</h2><p class="muted">Participant names and school details are loaded from the connected Google Sheet. Do not submit attendance for another participant. If a day is unavailable, the organiser must configure its date and attendance window in the Attendance_Settings sheet.</p></section>
-</main><footer>KVS · ZIET Mumbai · Workshop Attendance</footer>
+</div>
+<div id="offlineMode" class="mode-panel" hidden>
+<section class="card">
+ <div class="offline-controls">
+  <h2>Offline Attendance Register · ऑफलाइन उपस्थिति पंजिका</h2>
+  <p class="muted">Select the participant worksheet. English and Hindi names, bilingual school name and workshop day/date headings are loaded from the connected Google Sheets. The printout includes five additional blank rows for late additions.</p>
+  <div class="grid">
+   <div><label for="offlineBatch">Participant list / worksheet</label><select id="offlineBatch"><option value="">Loading participant lists…</option></select></div>
+   <div><label>Print layout</label><select disabled><option>A4 Landscape · Forenoon & Afternoon signatures</option></select></div>
+  </div>
+  <div class="offline-toolbar"><button class="primary" type="button" id="offlineLoad">Load Offline List</button><button type="button" id="offlinePrint">🖨️ Print A4 Offline Attendance</button></div>
+  <div id="offlineMessage" class="message info show" style="margin-top:14px">Choose a worksheet to load the bilingual participant register.</div>
+ </div>
+ <div class="offline-print-heading" id="offlinePrintHeading"></div>
+ <div class="offline-table-wrap">
+  <table id="offlinePreview"><thead id="offlineHead"><tr><th>S. No.</th><th>Name (English)</th><th>नाम (हिंदी)</th><th>School Name / विद्यालय का नाम</th></tr></thead><tbody id="offlineRows"><tr><td colspan="4" class="muted">No list loaded yet.</td></tr></tbody></table>
+ </div>
+</section>
+</div>
+</main><footer>KVS · ZIET Mumbai · Online & Offline Workshop Attendance</footer>
 <script>
 const batch=document.getElementById('batch'),participant=document.getElementById('participant'),message=document.getElementById('message'),loadmsg=document.getElementById('loadmsg');
 const sessionInfo=document.getElementById('sessionInfo'),activeSession=document.getElementById('activeSession');
@@ -158,6 +216,93 @@ document.getElementById('submit').addEventListener('click',()=>{
  }).withFailureHandler(e=>{show(message,e.message||String(e),'err');btn.disabled=false;btn.textContent="Submit this session's attendance"})
  .submitAttendance({sheetName:batch.value,participantId:participant.value,dayNumber:active.dayNumber,sessionCode:active.sessionCode,status:selectedStatus,signatureDataUrl:signatureData()});
 });
+
+let offlinePeople=[],offlineSessions=[],offlineSheetName='';
+function setAttendanceMode(mode){
+ const online=mode==='online';
+ document.getElementById('onlineMode').hidden=!online;
+ document.getElementById('offlineMode').hidden=online;
+ document.getElementById('onlineModeTab').classList.toggle('active',online);
+ document.getElementById('offlineModeTab').classList.toggle('active',!online);
+ document.getElementById('onlineModeTab').setAttribute('aria-selected',String(online));
+ document.getElementById('offlineModeTab').setAttribute('aria-selected',String(!online));
+ if(!online && !document.getElementById('offlineBatch').options.length)loadOfflineTabs();
+}
+document.getElementById('onlineModeTab').addEventListener('click',()=>setAttendanceMode('online'));
+document.getElementById('offlineModeTab').addEventListener('click',()=>setAttendanceMode('offline'));
+function escapeOffline(value){return String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function loadOfflineTabs(){
+ const sel=document.getElementById('offlineBatch');
+ if(!(window.google&&google.script&&google.script.run)){
+  sel.innerHTML='<option value="">Open deployed Apps Script attendance app</option>';
+  show(document.getElementById('offlineMessage'),'Offline participant lists are available inside the deployed Apps Script web app.','err');return;
+ }
+ sel.disabled=true;
+ google.script.run.withSuccessHandler(data=>{
+  sel.innerHTML='<option value="">Choose a participant worksheet</option>';
+  (data.tabs||[]).forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;sel.appendChild(o)});
+  sel.disabled=false;
+ }).withFailureHandler(e=>{
+  sel.innerHTML='<option value="">Unable to load worksheet tabs</option>';
+  show(document.getElementById('offlineMessage'),e.message||String(e),'err');
+ }).getInitialData();
+}
+function buildOfflineTable(){
+ const days=[],seen={};
+ offlineSessions.forEach(s=>{
+  const key=String(s.day)+'|'+String(s.date);
+  if(!seen[key]){seen[key]=true;days.push({day:s.day,date:s.date})}
+ });
+ let top='<tr><th rowspan="2">S. No.</th><th rowspan="2">Name (English)</th><th rowspan="2">नाम (हिंदी)</th><th rowspan="2">School Name / विद्यालय का नाम</th>';
+ days.forEach(d=>top+='<th colspan="2">'+escapeOffline(d.day)+'<br>'+escapeOffline(d.date)+'</th>');
+ top+='</tr><tr>';
+ days.forEach(()=>top+='<th>Forenoon<br>Signature</th><th>Afternoon<br>Signature</th>');
+ top+='</tr>';
+ document.getElementById('offlineHead').innerHTML=top;
+ const rows=offlinePeople.map((p,i)=>{
+  let row='<td>'+(i+1)+'</td><td>'+escapeOffline(p.englishName)+'</td><td>'+escapeOffline(p.hindiName)+'</td><td>'+escapeOffline(p.schoolName)+'</td>';
+  days.forEach(()=>row+='<td></td><td></td>');
+  return '<tr>'+row+'</tr>';
+ });
+ // Five intentionally empty rows for late additions / walk-in participants.
+ for(let i=1;i<=5;i++){
+  let row='<td>'+(offlinePeople.length+i)+'</td><td></td><td></td><td></td>';
+  days.forEach(()=>row+='<td></td><td></td>');
+  rows.push('<tr class="blank-row">'+row+'</tr>');
+ }
+ document.getElementById('offlineRows').innerHTML=rows.join('');
+ document.getElementById('offlinePrintHeading').innerHTML=
+  '<div style="font-weight:700;font-size:14px">KENDRIYA VIDYALAYA SANGATHAN</div>'+
+  '<div style="font-weight:700;font-size:12px">आंचलिक शिक्षा एवं प्रशिक्षण संस्थान, मुंबई · ZIET Mumbai</div>'+
+  '<div style="font-weight:700;margin-top:3px">WORKSHOP OFFLINE ATTENDANCE REGISTER · कार्यशाला ऑफलाइन उपस्थिति पंजिका</div>'+
+  '<div style="font-size:9px;margin-top:3px">Participant Worksheet: '+escapeOffline(offlineSheetName)+' · Total names: '+offlinePeople.length+' · Five blank rows included</div>';
+}
+function loadOfflineRegister(){
+ const sheet=document.getElementById('offlineBatch').value;
+ if(!sheet){show(document.getElementById('offlineMessage'),'Select a participant worksheet first.','err');return;}
+ const btn=document.getElementById('offlineLoad');btn.disabled=true;btn.textContent='Loading…';
+ google.script.run.withSuccessHandler(data=>{
+  offlinePeople=data.participants||[];offlineSessions=data.sessions||[];offlineSheetName=sheet;
+  buildOfflineTable();
+  const dayCount=new Set(offlineSessions.map(s=>s.day+'|'+s.date)).size;
+  show(document.getElementById('offlineMessage'),offlinePeople.length+' participant records loaded; '+dayCount+' workshop day(s) detected. Five extra blank rows are included in the printout.','ok');
+  btn.disabled=false;btn.textContent='Load Offline List';
+ }).withFailureHandler(e=>{
+  show(document.getElementById('offlineMessage'),e.message||String(e),'err');btn.disabled=false;btn.textContent='Load Offline List';
+ }).getOfflineRegisterData(sheet);
+}
+function printOfflineRegister(){
+ if(!offlinePeople.length){show(document.getElementById('offlineMessage'),'Load a participant worksheet before printing.','err');return;}
+ document.body.classList.add('offline-print');
+ const cleanup=()=>document.body.classList.remove('offline-print');
+ window.addEventListener('afterprint',cleanup,{once:true});
+ window.print();
+ setTimeout(cleanup,1500);
+}
+document.getElementById('offlineLoad').addEventListener('click',loadOfflineRegister);
+document.getElementById('offlinePrint').addEventListener('click',printOfflineRegister);
+loadOfflineTabs();
+
 loadLists();
 </script>
 </body></html>
