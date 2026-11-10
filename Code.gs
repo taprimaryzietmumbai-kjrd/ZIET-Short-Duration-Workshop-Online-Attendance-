@@ -495,11 +495,60 @@ function getOfflineRegisterData(sheetName) {
       schoolName:schoolParts.join(' / ')
     };
   }).filter(p=>p.englishName||p.hindiName);
-  return {participants:participants,sessions:getOfflineSessions_()};
+  // The participant master is also the authoritative source for workshop dates:
+  // columns headed "From" and "To" (Q and R in the Nameplates Data Online layout).
+  const sessions = getOfflineSessions_(sh);
+  return {participants:participants,sessions:sessions};
 }
 
-function getOfflineSessions_() {
-  return getAttendanceSettings_().map(s=>({
-    day:s.day, session:s.session, date:s.date, open:s.open, close:s.close
-  }));
+function getOfflineSessions_(participantSheet) {
+  const lastCol = participantSheet.getLastColumn();
+  const scanRows = Math.min(participantSheet.getLastRow(), 12);
+  const headerRows = participantSheet.getRange(1, 1, Math.max(scanRows, 1), lastCol).getDisplayValues();
+  let fromCol = -1, toCol = -1, headerRow = -1;
+  for (let r = 0; r < headerRows.length; r++) {
+    const headers = headerRows[r].map(normalizeHeader_);
+    const f = headers.findIndex(h => h === 'from' || h === 'start date' || h === 'workshop from');
+    const t = headers.findIndex(h => h === 'to' || h === 'end date' || h === 'workshop to');
+    if (f >= 0 && t >= 0) { fromCol = f + 1; toCol = t + 1; headerRow = r + 1; break; }
+  }
+  if (headerRow < 0) {
+    throw new Error('Workshop dates were not found in worksheet "' + participantSheet.getName() + '". Expected columns headed From and To.');
+  }
+
+  const dateRows = participantSheet.getRange(headerRow + 1, 1,
+    Math.max(participantSheet.getLastRow() - headerRow, 1), lastCol);
+  const raw = dateRows.getValues();
+  const shown = dateRows.getDisplayValues();
+  let startDate = '', endDate = '';
+  for (let i = 0; i < raw.length; i++) {
+    const start = normalizeWorkshopDate_(raw[i][fromCol - 1], shown[i][fromCol - 1]);
+    const end = normalizeWorkshopDate_(raw[i][toCol - 1], shown[i][toCol - 1]);
+    if (start && end) { startDate = start; endDate = end; break; }
+  }
+  if (!startDate || !endDate) {
+    throw new Error('No valid From/To workshop date range was found in worksheet "' + participantSheet.getName() + '".');
+  }
+  const start = new Date(startDate + 'T00:00:00Z');
+  const end = new Date(endDate + 'T00:00:00Z');
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+    throw new Error('Invalid workshop date range in worksheet "' + participantSheet.getName() + '": ' + startDate + ' to ' + endDate);
+  }
+
+  const timetable = getAttendanceSettings_();
+  const forenoon = timetable.find(x => /forenoon|पूर्वाह्न|\\bF\\.?N\\.?\\b/i.test(String(x.session)));
+  const afternoon = timetable.find(x => /afternoon|अपराह्न|\\bA\\.?N\\.?\\b/i.test(String(x.session)));
+  if (!forenoon || !afternoon) {
+    throw new Error('The attendance timetable must contain one Forenoon and one Afternoon session to supply the signature headings.');
+  }
+
+  const sessions = [];
+  let dayNumber = 1;
+  for (let d = start.getTime(); d <= end.getTime(); d += 86400000) {
+    const date = Utilities.formatDate(new Date(d), 'UTC', 'yyyy-MM-dd');
+    sessions.push({day:'Day ' + dayNumber, session:forenoon.session, date:date, open:forenoon.open, close:forenoon.close});
+    sessions.push({day:'Day ' + dayNumber, session:afternoon.session, date:date, open:afternoon.open, close:afternoon.close});
+    dayNumber++;
+  }
+  return sessions;
 }
