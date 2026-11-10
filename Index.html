@@ -53,15 +53,15 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
  body.offline-print .card{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;border:0;box-shadow:none;margin:0!important;padding:0!important}
  body.offline-print .offline-table-wrap{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;overflow:visible!important;border:0;margin:4px 0 0!important}
  body.offline-print .offline-print-heading{display:block;text-align:center;margin:0 0 6px}
- body.offline-print #offlinePreview{display:table!important;width:287mm!important;min-width:287mm!important;max-width:none!important;font-size:8px;table-layout:fixed!important}
+ body.offline-print #offlinePreview{display:table!important;width:100%!important;min-width:100%!important;max-width:100%!important;font-size:8px;table-layout:fixed!important;border-collapse:collapse!important}
  body.offline-print #offlinePreview th,body.offline-print #offlinePreview td{padding:4px 3px;border:1px solid #222;height:34px;vertical-align:middle;overflow-wrap:anywhere;box-sizing:border-box}
  body.offline-print #offlinePreview th{background:#e8e8e8!important;color:#000!important}
  /* Fixed A4-landscape printable width: 297mm page minus 5mm margins on both sides. */
- body.offline-print #offlinePreview th:nth-child(1),body.offline-print #offlinePreview td:nth-child(1){width:4%!important}
- body.offline-print #offlinePreview th:nth-child(2),body.offline-print #offlinePreview td:nth-child(2){width:15%!important}
- body.offline-print #offlinePreview th:nth-child(3),body.offline-print #offlinePreview td:nth-child(3){width:19%!important}
+ body.offline-print #offlinePreview col.serial-col{width:4%!important}
+ body.offline-print #offlinePreview col.name-col{width:15%!important}
+ body.offline-print #offlinePreview col.school-col{width:19%!important}
+ body.offline-print #offlinePreview col.session-col{width:6.2%!important}
  body.offline-print #offlinePreview th:nth-child(3){white-space:normal!important;min-width:0!important;font-size:9px!important;line-height:1.35!important}
- body.offline-print #offlinePreview th:nth-child(n+4),body.offline-print #offlinePreview td:nth-child(n+4){width:6.2%!important}
  body.offline-print #offlinePreview td:nth-child(2),body.offline-print #offlinePreview td:nth-child(3){text-align:left}
  body.offline-print #offlinePreview th:nth-child(3)::before{content:"विद्यालय का नाम / School Name";display:block}
  body.offline-print #offlinePreview th:nth-child(3){font-size:0!important}
@@ -293,6 +293,13 @@ function buildOfflineTable(){
  days.forEach(()=>top+='<th>F.N. / पूर्वाह्न<br>Signature / हस्ताक्षर</th><th>A.N. / अपराह्न<br>Signature / हस्ताक्षर</th>');
  top+='</tr>';
  document.getElementById('offlineHead').innerHTML=top;
+ const preview=document.getElementById('offlinePreview');
+ const oldCols=preview.querySelector('colgroup');if(oldCols)oldCols.remove();
+ const colgroup=document.createElement('colgroup');
+ ['serial-col','name-col','school-col',...Array(days.length*2).fill('session-col')].forEach(cls=>{
+  const col=document.createElement('col');col.className=cls;colgroup.appendChild(col);
+ });
+ preview.insertBefore(colgroup,preview.querySelector('thead'));
  const rows=offlinePeople.map((p,i)=>{
   let row='<td>'+(i+1)+'</td>'+
    '<td><span class="offline-hi">'+escapeOffline(p.hindiName)+'</span><span class="offline-en">'+escapeOffline(p.englishName)+'</span></td>'+
