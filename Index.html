@@ -255,9 +255,21 @@ function loadOfflineTabs(){
  }).getInitialData();
 }
 function formatOfflineDate(value){
- const raw=String(value||'').trim();
- const m=raw.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
- if(m)return m[3]+'.'+m[2]+'.'+m[1];
+ if(value===null||value===undefined||value==='')return '';
+ const raw=String(value).trim();
+ // Accept ISO (yyyy-mm-dd), Indian slash/dot dates (d/m/yyyy or d.m.yyyy),
+ // and already formatted DD.MM.YYYY values.
+ let m=raw.match(/^(\\d{4})[-/](\\d{1,2})[-/](\\d{1,2})$/);
+ if(m){
+  const year=m[1],month=String(m[2]).padStart(2,'0'),day=String(m[3]).padStart(2,'0');
+  return day+'.'+month+'.'+year;
+ }
+ m=raw.match(/^(\\d{1,2})[./-](\\d{1,2})[./-](\\d{4})$/);
+ if(m)return String(m[1]).padStart(2,'0')+'.'+String(m[2]).padStart(2,'0')+'.'+m[3];
+ const parsed=new Date(raw);
+ if(!isNaN(parsed.getTime())){
+  return String(parsed.getDate()).padStart(2,'0')+'.'+String(parsed.getMonth()+1).padStart(2,'0')+'.'+parsed.getFullYear();
+ }
  return raw;
 }
 function buildOfflineTable(){
