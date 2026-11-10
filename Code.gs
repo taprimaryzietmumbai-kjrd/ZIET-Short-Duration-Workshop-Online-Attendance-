@@ -1,4 +1,5 @@
-const SPREADSHEET_ID = '1q7U2KHKFW-DU8ncANE-XXQ-vgdxZDLG2q2uqfxcAuZ4';
+const SPREADSHEET_ID = '1q7U2KHKFW-DU8ncANE-XXQ-vgdxZDLG2q2uqfxcAuZ4'; // Existing attendance logs and timetable
+const PARTICIPANT_SOURCE_SPREADSHEET_ID = '1YMq7uWcbEJRJitoz3HmJNq67-RQuiUE9AdJbqAxTt8g'; // Shared ZIET participant master
 const LOG_SHEET = 'Attendance_Log';
 const SETTINGS_SHEET = 'Attendance_Settings';
 
@@ -10,10 +11,8 @@ function doGet() {
 }
 
 function getInitialData() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const timetableSheet = findTimetableSheet_(ss);
+  const ss = SpreadsheetApp.openById(PARTICIPANT_SOURCE_SPREADSHEET_ID);
   const excluded = [LOG_SHEET, SETTINGS_SHEET];
-  if (timetableSheet) excluded.push(timetableSheet.getName());
   const tabs = ss.getSheets()
     .map(s => s.getName())
     .filter(n => !excluded.includes(n));
@@ -26,7 +25,7 @@ function getInitialData() {
 
 function getParticipants(sheetName) {
   if (!sheetName) throw new Error('Select a participant list.');
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const ss = SpreadsheetApp.openById(PARTICIPANT_SOURCE_SPREADSHEET_ID);
   const sh = ss.getSheetByName(sheetName);
   if (!sh || [LOG_SHEET, SETTINGS_SHEET].includes(sheetName)) {
     throw new Error('The selected participant sheet was not found.');
@@ -361,7 +360,9 @@ function submitAttendance(payload) {
     log.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
   }
 
-  const participantSheet = ss.getSheetByName(payload.sheetName);
+  // Participant roster and signature images live in the shared participant master.
+  const participantSource = SpreadsheetApp.openById(PARTICIPANT_SOURCE_SPREADSHEET_ID);
+  const participantSheet = participantSource.getSheetByName(payload.sheetName);
   const participantRow = Number(payload.participantId);
   if (!participantSheet || participantRow < 1 || participantRow > participantSheet.getMaxRows()) {
     throw new Error('Could not find the participant row in the selected worksheet.');
