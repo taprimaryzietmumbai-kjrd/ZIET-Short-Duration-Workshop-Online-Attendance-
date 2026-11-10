@@ -421,3 +421,74 @@ function submitAttendance(payload) {
     signatureCell: signatureCellA1
   };
 }
+
+
+// Offline register data: bilingual participant names and school names plus the configured workshop timetable.
+function getOfflineRegisterData(sheetName) {
+  if (!sheetName) throw new Error('Select a participant worksheet.');
+  const ss = SpreadsheetApp.openById(PARTICIPANT_SOURCE_SPREADSHEET_ID);
+  const sh = ss.getSheetByName(sheetName);
+  if (!sh || [LOG_SHEET, SETTINGS_SHEET].includes(sheetName)) {
+    throw new Error('The selected participant worksheet was not found.');
+  }
+  const values = sh.getDataRange().getDisplayValues();
+  if (!values.length) return { participants: [], sessions: getOfflineSessions_() };
+
+  const englishNameHeaders = [
+    'participant name','name of participant','name of the participant',
+    'teacher name','name of teacher','name of the teacher','teacher','participant',
+    'name','full name','employee name','staff name'
+  ];
+  const hindiNameHeaders = [
+    'नाम','प्रतिभागी का नाम','प्रशिक्षार्थी का नाम','शिक्षक का नाम',
+    'हिंदी में नाम','हिन्दी में नाम','नाम हिंदी में','नाम हिन्दी में','hindi name','name in hindi'
+  ];
+  const englishSchoolHeaders = [
+    'school','school name','name of school','name of the school','kv name',
+    'name of kv','kendriya vidyalaya','vidyalaya','school (english)','विद्यालय का नाम'
+  ];
+  const hindiSchoolHeaders = [
+    'विद्यालय का नाम हिंदी में','विद्यालय का नाम हिन्दी में','विद्यालय का नाम (हिंदी)',
+    'विद्यालय का नाम (हिन्दी)','हिंदी में विद्यालय का नाम','हिन्दी में विद्यालय का नाम',
+    'school name in hindi','school name in hindi language','hindi school name'
+  ];
+
+  let headerRowIndex=-1, englishNameIndex=-1, hindiNameIndex=-1;
+  let englishSchoolIndex=-1, hindiSchoolIndex=-1, best=-1;
+  for (let r=0; r<Math.min(values.length,12); r++) {
+    const headers=values[r].map(normalizeHeader_);
+    const en=findHeader_(headers,englishNameHeaders);
+    const hi=findHeader_(headers,hindiNameHeaders);
+    const es=findHeader_(headers,englishSchoolHeaders);
+    const hs=findHeader_(headers,hindiSchoolHeaders);
+    const score=(en>=0?10:0)+(hi>=0?7:0)+(es>=0?3:0)+(hs>=0?2:0);
+    if(score>best) {
+      best=score; headerRowIndex=r; englishNameIndex=en; hindiNameIndex=hi;
+      englishSchoolIndex=es; hindiSchoolIndex=hs;
+    }
+  }
+  if(englishNameIndex<0 && hindiNameIndex<0) {
+    throw new Error('Could not identify the participant-name column in worksheet "'+sheetName+'".');
+  }
+
+  const participants=values.slice(headerRowIndex+1).map((row,offset)=>{
+    const englishName=englishNameIndex>=0?String(row[englishNameIndex]||'').trim():'';
+    const hindiName=hindiNameIndex>=0?String(row[hindiNameIndex]||'').trim():'';
+    const englishSchool=englishSchoolIndex>=0?String(row[englishSchoolIndex]||'').trim():'';
+    const hindiSchool=hindiSchoolIndex>=0?String(row[hindiSchoolIndex]||'').trim():'';
+    const schoolParts=[englishSchool,hindiSchool].filter((v,i,a)=>v && a.indexOf(v)===i);
+    return {
+      serial:offset+1,
+      englishName:englishName||hindiName,
+      hindiName:hindiName||englishName,
+      schoolName:schoolParts.join(' / ')
+    };
+  }).filter(p=>p.englishName||p.hindiName);
+  return {participants:participants,sessions:getOfflineSessions_()};
+}
+
+function getOfflineSessions_() {
+  return getAttendanceSettings_().map(s=>({
+    day:s.day, session:s.session, date:s.date, open:s.open, close:s.close
+  }));
+}
