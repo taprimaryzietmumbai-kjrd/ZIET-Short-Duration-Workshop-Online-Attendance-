@@ -228,7 +228,7 @@ function getAttendanceSettings_() {
 
 function normalizeWorkshopDate_(rawValue, displayedValue) {
   if (rawValue instanceof Date && !isNaN(rawValue.getTime())) {
-    return Utilities.formatDate(rawValue, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    return Utilities.formatDate(rawValue, 'Asia/Kolkata', 'yyyy-MM-dd');
   }
   const s = String(displayedValue || rawValue || '').trim();
   if (!s) return '';
@@ -287,16 +287,22 @@ function getCurrentAttendanceSession() {
   const tz = 'Asia/Kolkata';
   const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   const currentTime = Utilities.formatDate(now, tz, 'HH:mm');
-  const sessions = settings.map((s, i) => ({
-    dayNumber: Math.floor(i / 2) + 1,
-    day: s.day,
-    sessionCode: i % 2 === 0 ? 'FN' : 'AN',
-    session: s.session,
-    date: s.date,
-    open: s.open,
-    close: s.close,
-    currentlyWithinWindow: s.date === today && currentTime >= s.open && currentTime <= s.close
-  })).filter(s => s.date === today);
+  const sessions = settings.map(s => {
+    const dayMatch = String(s.day).match(/\\d+/);
+    const sessionText = String(s.session || '');
+    const isAfternoon = /afternoon|अपराह्न|\\bA\\.?N\\.?\\b/i.test(sessionText);
+    const isForenoon = /forenoon|पूर्वाह्न|\\bF\\.?N\\.?\\b/i.test(sessionText);
+    return {
+      dayNumber: dayMatch ? Number(dayMatch[0]) : 0,
+      day: s.day,
+      sessionCode: isAfternoon ? 'AN' : (isForenoon ? 'FN' : ''),
+      session: s.session,
+      date: s.date,
+      open: s.open,
+      close: s.close,
+      currentlyWithinWindow: s.date === today && currentTime >= s.open && currentTime <= s.close
+    };
+  }).filter(s => s.date === today && s.dayNumber >= 1 && s.sessionCode);
   if (sessions.length) return { available: true, sessions: sessions, today: today };
   return {
     available: false,
@@ -326,8 +332,14 @@ function submitAttendance(payload) {
   if (!participant) throw new Error('Participant not found. Refresh the list and try again.');
 
   const settings = getAttendanceSettings_();
-  const index = (dayNum - 1) * 2 + (sessionCode === 'FN' ? 0 : 1);
-  const setting = settings[index];
+  const setting = settings.find(s => {
+    const dayMatch = String(s.day).match(/\\d+/);
+    const sessionText = String(s.session || '');
+    const isAfternoon = /afternoon|अपराह्न|\\bA\\.?N\\.?\\b/i.test(sessionText);
+    const isForenoon = /forenoon|पूर्वाह्न|\\bF\\.?N\\.?\\b/i.test(sessionText);
+    return Number(dayMatch && dayMatch[0]) === dayNum &&
+      (sessionCode === 'AN' ? isAfternoon : isForenoon);
+  });
   const now = new Date();
   const tz = 'Asia/Kolkata';
   const today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
