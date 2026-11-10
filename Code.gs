@@ -492,6 +492,8 @@ function getOfflineRegisterData(sheetName) {
       serial:offset+1,
       englishName:englishName||hindiName,
       hindiName:hindiName||englishName,
+      englishSchoolName:englishSchool||hindiSchool,
+      hindiSchoolName:hindiSchool||englishSchool,
       schoolName:schoolParts.join(' / ')
     };
   }).filter(p=>p.englishName||p.hindiName);
