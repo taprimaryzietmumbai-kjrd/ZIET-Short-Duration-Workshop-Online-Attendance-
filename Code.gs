@@ -360,17 +360,17 @@ function submitAttendance(payload) {
     log.getRange(1, 1, 1, logHeaders.length).setValues([logHeaders]);
   }
 
-  // Participant roster and signature images live in the shared participant master.
-  const participantSource = SpreadsheetApp.openById(PARTICIPANT_SOURCE_SPREADSHEET_ID);
-  const participantSheet = participantSource.getSheetByName(payload.sheetName);
-  const participantRow = Number(payload.participantId);
-  if (!participantSheet || participantRow < 1 || participantRow > participantSheet.getMaxRows()) {
-    throw new Error('Could not find the participant row in the selected worksheet.');
+  // Keep signatures in the original attendance workbook, separate from the shared participant master.
+  // A dedicated sheet avoids altering the participant source spreadsheet or requiring duplicate roster tabs.
+  let signatureSheet = ss.getSheetByName('Attendance_Signatures');
+  if (!signatureSheet) {
+    signatureSheet = ss.insertSheet('Attendance_Signatures');
+    signatureSheet.getRange(1, 1, 1, 9).setValues([[
+      'Timestamp', 'Participant Sheet', 'Participant Row', 'Participant Name',
+      'School', 'Day', 'Session', 'Workshop Date', 'Status'
+    ]]);
+    signatureSheet.setFrozenRows(1);
   }
-
-  const signatureColumn = 4 + index;
-  const signatureCell = participantSheet.getRange(participantRow, signatureColumn);
-  const signatureCellA1 = signatureCell.getA1Notation();
 
   const dataUrlParts = payload.signatureDataUrl.split(',');
   const mimeHeader = String(dataUrlParts[0] || '').toLowerCase();
@@ -382,16 +382,15 @@ function submitAttendance(payload) {
   const blob = Utilities.newBlob(imageBytes, mimeType.replace('image/jpg','image/jpeg'),
     'signature_' + payload.participantId + '_day' + dayNum + '_' + sessionCode + '.png');
 
-  participantSheet.setColumnWidth(signatureColumn, 110);
-  participantSheet.setRowHeight(participantRow, Math.max(participantSheet.getRowHeight(participantRow), 55));
-  signatureCell.setNote('Attendance: ' + payload.status + '\\nSession: ' + sessionLabel + '\\nSubmitted: ' + timeStampText);
-
-  participantSheet.getImages().forEach(image => {
-    const anchor = image.getAnchorCell();
-    if (anchor.getRow() === participantRow && anchor.getColumn() === signatureColumn) image.remove();
-  });
-  const insertedImage = participantSheet.insertImage(blob, signatureColumn, participantRow);
-  insertedImage.setWidth(100).setHeight(45).setAnchorCell(signatureCell);
+  const signatureRow = Math.max(signatureSheet.getLastRow() + 1, 2);
+  const signatureMeta = [now, payload.sheetName, String(payload.participantId), participant.name,
+    participant.school, 'Day ' + dayNum, sessionLabel, setting.date, payload.status];
+  signatureSheet.getRange(signatureRow, 1, 1, signatureMeta.length).setValues([signatureMeta]);
+  signatureSheet.setRowHeight(signatureRow, 55);
+  signatureSheet.setColumnWidth(10, 115);
+  const insertedImage = signatureSheet.insertImage(blob, 10, signatureRow);
+  insertedImage.setWidth(100).setHeight(45);
+  const signatureCellA1 = 'Attendance_Signatures!J' + signatureRow;
 
   const data = log.getDataRange().getValues();
   let existingRow = -1;
