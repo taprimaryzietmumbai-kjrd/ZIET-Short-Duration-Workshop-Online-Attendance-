@@ -36,6 +36,8 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
 #offlinePreview td:nth-child(2),#offlinePreview td:nth-child(3),#offlinePreview td:nth-child(4){
  font-family:Arial,sans-serif;font-size:12pt;font-weight:700
 }
+.offline-hi{display:block;font-weight:700;line-height:1.25}
+.offline-en{display:block;font-weight:700;font-size:10pt;line-height:1.2;margin-top:2px}
 #offlinePreview th{background:#eaf2ff;color:#124b86}
 .offline-print-heading{display:none}
 @media print{
@@ -278,20 +280,22 @@ function buildOfflineTable(){
   const key=String(s.day)+'|'+String(s.date);
   if(!seen[key]){seen[key]=true;days.push({day:s.day,date:s.date})}
  });
- let top='<tr><th rowspan="2">S. No.</th><th rowspan="2">Name (English)</th><th rowspan="2">नाम (हिंदी)</th><th rowspan="2">School Name / विद्यालय का नाम</th>';
+ let top='<tr><th rowspan="2">S. No.</th><th rowspan="2">नाम / Name</th><th rowspan="2">विद्यालय का नाम / School Name</th>';
  days.forEach(d=>top+='<th colspan="2">'+escapeOffline(d.day)+'<br>'+escapeOffline(formatOfflineDate(d.date))+'</th>');
  top+='</tr><tr>';
  days.forEach(()=>top+='<th>F.N. / पूर्वाह्न<br>Signature / हस्ताक्षर</th><th>A.N. / अपराह्न<br>Signature / हस्ताक्षर</th>');
  top+='</tr>';
  document.getElementById('offlineHead').innerHTML=top;
  const rows=offlinePeople.map((p,i)=>{
-  let row='<td>'+(i+1)+'</td><td>'+escapeOffline(p.englishName)+'</td><td>'+escapeOffline(p.hindiName)+'</td><td>'+escapeOffline(p.schoolName)+'</td>';
+  let row='<td>'+(i+1)+'</td>'+
+   '<td><span class="offline-hi">'+escapeOffline(p.hindiName)+'</span><span class="offline-en">'+escapeOffline(p.englishName)+'</span></td>'+
+   '<td><span class="offline-hi">'+escapeOffline(p.hindiSchoolName||'')+'</span><span class="offline-en">'+escapeOffline(p.englishSchoolName||'')+'</span></td>';
   days.forEach(()=>row+='<td></td><td></td>');
   return '<tr>'+row+'</tr>';
  });
  // Five intentionally empty rows for late additions / walk-in participants.
  for(let i=1;i<=5;i++){
-  let row='<td>'+(offlinePeople.length+i)+'</td><td></td><td></td><td></td>';
+  let row='<td>'+(offlinePeople.length+i)+'</td><td></td><td></td>';
   days.forEach(()=>row+='<td></td><td></td>');
   rows.push('<tr class="blank-row">'+row+'</tr>');
  }
