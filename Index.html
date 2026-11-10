@@ -59,6 +59,9 @@ footer{text-align:center;color:var(--muted);padding:10px 15px 28px;font-size:.9r
  body.offline-print #offlinePreview th:nth-child(n+5){width:6.4%}
  body.offline-print #offlinePreview thead{display:table-header-group}
  body.offline-print #offlinePreview tr{break-inside:avoid}
+ body.offline-print #offlinePreview tfoot{display:table-footer-group}
+ body.offline-print .offline-signature-footer td{border:0!important;height:58px!important;padding:8px 12px 0!important;vertical-align:bottom!important}
+ body.offline-print .offline-signature-line{display:block;border-top:1px solid #222;padding-top:4px;text-align:center;font:700 9pt Arial,sans-serif;color:#000}
 }
 
 @media(max-width:700px){.grid{grid-template-columns:1fr}.days{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:16px}}@media(max-width:390px){.days{grid-template-columns:1fr}}
@@ -281,6 +284,14 @@ function buildOfflineTable(){
   rows.push('<tr class="blank-row">'+row+'</tr>');
  }
  document.getElementById('offlineRows').innerHTML=rows.join('');
+ const oldFooter=document.querySelector('#offlinePreview tfoot');if(oldFooter)oldFooter.remove();
+ const footer=document.createElement('tfoot');
+ footer.innerHTML='<tr class="offline-signature-footer"><td colspan="'+(4+days.length*2)+'">'+
+  '<table style="width:100%;border:0;border-collapse:collapse"><tr>'+
+  '<td style="width:50%;border:0;text-align:center;vertical-align:bottom;padding:24px 18px 0"><span class="offline-signature-line">Coordinator\'s Signature<br>समन्वयक के हस्ताक्षर</span></td>'+
+  '<td style="width:50%;border:0;text-align:center;vertical-align:bottom;padding:24px 18px 0"><span class="offline-signature-line">Director, ZIET Mumbai<br>निदेशक, आंचलिक शिक्षा एवं प्रशिक्षण संस्थान, मुंबई</span></td>'+
+  '</tr></table></td></tr>';
+ document.getElementById('offlinePreview').appendChild(footer);
  document.getElementById('offlinePrintHeading').innerHTML=
   '<div style="font-weight:700;font-size:14px">KENDRIYA VIDYALAYA SANGATHAN</div>'+
   '<div style="font-weight:700;font-size:12px">आंचलिक शिक्षा एवं प्रशिक्षण संस्थान, मुंबई · ZIET Mumbai</div>'+
